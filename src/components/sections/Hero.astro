@@ -1,0 +1,59 @@
+---
+import ArrowLink from '../ArrowLink.astro';
+import { site, projectEnquiry } from '../../data/site';
+---
+
+<section class="hero section" id="top" data-section="hero">
+  <div class="container">
+    <h1 class="hero__title reveal">
+      Design meets<br />engineering.
+    </h1>
+
+    <p class="hero__lede reveal" style="--reveal-delay: 120ms">
+      We create distinctive digital experiences <br />
+      through thoughtful design <br />
+      and solid development.
+    </p>
+
+    <div class="reveal" style="--reveal-delay: 240ms">
+      <ArrowLink href={projectEnquiry} size="lg">Start a project</ArrowLink>
+    </div>
+  </div>
+
+  <p class="hero__location container">{site.location}</p>
+</section>
+
+<style>
+  .hero { padding-bottom: 7rem; }
+
+  .hero__title {
+    font-size: var(--t-hero);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    max-width: 15ch;
+  }
+
+  .hero__lede {
+    margin-block: 2.25rem 3rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+    max-width: 46ch;
+  }
+
+  .hero__location {
+    position: absolute;
+    left: 0; right: 0; bottom: 2.5rem;
+    font-size: var(--t-menu);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+  }
+
+  @media (max-width: 760px) {
+    .hero__title { max-width: none; }
+    .hero__lede br { display: none; }
+  }
+</style>

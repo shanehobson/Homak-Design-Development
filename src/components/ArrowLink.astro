@@ -1,0 +1,49 @@
+---
+/* The bordered "START A PROJECT ↗" control. `size` maps to the two Figma
+   text styles: "menu" (14px) in the header, "start project" (20px) in the hero. */
+interface Props {
+  href: string;
+  size?: 'sm' | 'lg';
+  class?: string;
+}
+const { href, size = 'sm', class: klass } = Astro.props;
+---
+
+<a href={href} class:list={['cta', `cta--${size}`, klass]}>
+  <span><slot /></span>
+  <svg class="arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <path d="M4 12 12 4M12 4H5.5M12 4v6.5" stroke="currentColor" stroke-width="1.25"
+          stroke-linecap="round" stroke-linejoin="round" />
+  </svg>
+</a>
+
+<style>
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.25em;
+    border: 1px solid var(--accent);
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: var(--track-wide);
+    line-height: 1;
+    white-space: nowrap;
+    transition: background-color 300ms var(--ease), border-color 300ms var(--ease);
+  }
+
+  .cta--sm { font-size: var(--t-menu); padding: 1.15em 1.5em; }
+  .cta--lg { font-size: var(--t-cta);  padding: 1.1em 1.6em; }
+
+  .arrow {
+    width: 1em;
+    height: 1em;
+    flex: none;
+    transition: transform 300ms var(--ease);
+  }
+
+  .cta:hover {
+    background-color: var(--accent-dim);
+    border-color: var(--accent);
+  }
+  .cta:hover .arrow { transform: translate(2px, -2px); }
+</style>

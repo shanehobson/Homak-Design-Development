@@ -1,0 +1,149 @@
+---
+import Logo from './Logo.astro';
+import ArrowLink from './ArrowLink.astro';
+import { nav, projectEnquiry } from '../data/site';
+---
+
+<header class="header">
+  <div class="header__inner container">
+    <a href="#top" class="brand" aria-label="Homak — home">
+      <Logo width={180} />
+    </a>
+
+    <nav class="nav" aria-label="Primary">
+      {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+    </nav>
+
+    {/* Wrapper is owned by this component so the scoped `display: none`
+        below actually applies — a class passed into ArrowLink would carry
+        that component's scope id instead, not this one's. */}
+    <div class="header__cta">
+      <ArrowLink href={projectEnquiry}>Start a project</ArrowLink>
+    </div>
+
+    <button class="burger" type="button" data-menu-toggle
+            aria-expanded="false" aria-controls="mobile-nav">
+      <span class="visually-hidden">Menu</span>
+      <span class="burger__bar"></span>
+      <span class="burger__bar"></span>
+    </button>
+  </div>
+</header>
+
+{/* Mobile: full-screen overlay nav */}
+<div class="drawer" id="mobile-nav" data-drawer hidden>
+  <nav aria-label="Primary (mobile)">
+    {nav.map((item) => <a href={item.href} data-drawer-link>{item.label}</a>)}
+  </nav>
+  <ArrowLink href={projectEnquiry} size="lg">Start a project</ArrowLink>
+</div>
+
+<style>
+  .header {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 30;
+    height: var(--header-h);
+    display: flex;
+    align-items: center;
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .brand { color: var(--text); flex: none; }
+
+  .nav {
+    display: flex;
+    gap: clamp(1.5rem, 3vw, 3rem);
+    font-size: var(--t-menu);
+    text-transform: uppercase;
+    letter-spacing: var(--track-wide);
+  }
+  .nav a { position: relative; padding-block: 0.5rem; }
+  .nav a::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 300ms var(--ease);
+  }
+  .nav a:hover::after { transform: scaleX(1); }
+
+  /* ---- Mobile ------------------------------------------------------- */
+  .burger { display: none; width: 2rem; height: 1.5rem; position: relative; }
+  .burger__bar {
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--text);
+    transition: transform 300ms var(--ease), opacity 200ms linear;
+  }
+  .burger__bar:nth-child(2) { top: 0.4rem; }
+  .burger__bar:nth-child(3) { top: 1rem; }
+  .burger[aria-expanded='true'] .burger__bar:nth-child(2) { transform: translateY(0.3rem) rotate(45deg); }
+  .burger[aria-expanded='true'] .burger__bar:nth-child(3) { transform: translateY(-0.3rem) rotate(-45deg); }
+
+  .drawer {
+    position: fixed;
+    inset: 0;
+    z-index: 25;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    background: color-mix(in srgb, var(--grad-0) 94%, transparent);
+    backdrop-filter: blur(18px);
+  }
+  .drawer[hidden] { display: none; }
+  .drawer nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: var(--track-wide);
+  }
+
+  @media (max-width: 900px) {
+    .nav, .header__cta { display: none; }
+    .burger { display: block; }
+  }
+</style>
+
+<script>
+  const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+  const drawer = document.querySelector<HTMLElement>('[data-drawer]');
+
+  if (toggle && drawer) {
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      drawer.hidden = !open;
+      document.body.style.overflow = open ? 'hidden' : '';
+    };
+
+    toggle.addEventListener('click', () =>
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true'),
+    );
+
+    // Close after picking a destination, and on Escape.
+    drawer.querySelectorAll('[data-drawer-link]').forEach((link) =>
+      link.addEventListener('click', () => setOpen(false)),
+    );
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !drawer.hidden) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+  }
+</script>

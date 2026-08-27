@@ -1,0 +1,101 @@
+---
+import { Image } from 'astro:assets';
+import knotBright from '../assets/sculptures/knot-bright.png';
+import knotHero from '../assets/sculptures/knot-hero-raw.png';
+---
+
+{/* Fixed behind everything. The gradient never moves; content scrolls over it.
+    Each sculpture fades in when its section enters the viewport. */}
+<div class="backdrop" data-backdrop aria-hidden="true">
+  <div class="grad"></div>
+  <Image class="knot knot--hero" src={knotHero} alt="" widths={[560, 1120]} loading="eager" />
+  <Image class="knot knot--work" src={knotBright} alt="" widths={[520, 1040]} loading="lazy" />
+</div>
+
+<style>
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  /* Figma paint style "background". The export dropped the gradient transform,
+     and a plain corner-to-corner linear washes the whole viewport out. The comps
+     show the ramp confined to a bloom in the upper-left, so the same stops are
+     run along a radial anchored just off that corner: the bright core sits
+     off-canvas and only the falloff is visible. */
+  .grad {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(
+        115% 105% at -10% -18%,
+        var(--grad-3) 0%,
+        var(--grad-2) 22%,
+        var(--grad-1) 38%,
+        var(--grad-0) 62%,
+        var(--grad-0) 100%
+      ),
+      var(--grad-0);
+  }
+
+  .knot {
+    position: absolute;
+    width: auto;
+    opacity: 0;
+    transition:
+      opacity 1200ms var(--ease),
+      transform 1600ms var(--ease);
+    will-change: opacity, transform;
+  }
+
+  /* Both renders are transparent chrome on alpha — no blend mode needed. */
+  .knot--hero {
+    top: 52%;
+    right: -7vw;
+    height: 108vh;
+    transform: translateY(-50%) scale(1.06);
+  }
+
+  .knot--work {
+    right: -8vw;
+    bottom: -14vh;
+    height: 68vh;
+    transform: translateY(40px) rotate(-6deg);
+  }
+
+  /* Section in view -> its sculpture appears. */
+  .backdrop[data-active='hero'] .knot--hero {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  .backdrop[data-active='work'] .knot--work {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+  }
+  /* A ghost of the work sculpture lingers behind the team + contact sections,
+     the way the comps show it bleeding between panels. */
+  .backdrop[data-active='about'] .knot--work,
+  .backdrop[data-active='contact'] .knot--work {
+    opacity: 0.14;
+    transform: translateY(0) rotate(0deg);
+  }
+
+  @media (max-width: 760px) {
+    /* Drop the sculptures back so they read as texture behind the copy
+       rather than competing with it. */
+    .knot--hero { top: 68%; height: 48vh; right: -22vw; }
+    .knot--work { height: 34vh; right: -18vw; bottom: -6vh; }
+    .backdrop[data-active='hero'] .knot--hero { opacity: 0.32; }
+    .backdrop[data-active='work'] .knot--work { opacity: 0.4; }
+  }
+
+  /* No JS: show the sculptures rather than an empty gradient. */
+  :global(html.no-js) .knot { opacity: 0.55; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .knot { transition: opacity 200ms linear; transform: none !important; }
+  }
+</style>

@@ -1,0 +1,45 @@
+/* Design tokens — sourced from homak-styles.json (Figma export, 2026-08-27) */
+:root {
+  /* ---- Colour ------------------------------------------------------- */
+  /* Figma paint style "background": linear gradient, dark -> light.
+     The axis runs bottom-right (dark) to top-left (light) so the light
+     falls in the upper-left corner, as in the comps. */
+  --grad-0: #141414;
+  --grad-1: #242424;
+  --grad-2: #383737;
+  --grad-3: #7a7979;
+
+  --bg-base: var(--grad-0);
+  --accent: #00a0c4;           /* Figma paint style "color accent" */
+  --accent-dim: #00a0c433;
+
+  --text: #ffffff;
+  --text-muted: #ffffffab;     /* white @ 67% — from usedColors */
+  --text-faint: #ffffff80;
+  --hairline: #ffffff24;
+
+  /* ---- Type --------------------------------------------------------- */
+  --font: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Figma text styles. Sizes are the 1440px values; clamp() scales down. */
+  --t-hero:   clamp(2.5rem, 7.25vw, 6.5rem);   /* 104px — hero H1        */
+  --t-title:  clamp(1.75rem, 3.4vw, 3rem);     /* 48px  — "Title"        */
+  --t-cta:    clamp(0.875rem, 1.1vw, 1.25rem); /* 20px  — "start project"*/
+  --t-card:   clamp(1rem, 1.2vw, 1.25rem);     /* 20px  — "cart name"    */
+  --t-body:   clamp(0.875rem, 1vw, 1rem);      /* 16px  — "small text"   */
+  --t-menu:   0.875rem;                        /* 14px  — "menu"         */
+
+  --track-wide: 0.15em;   /* 15% — menu + start project */
+  --leading-tight: 1.2;
+  --leading-body: 1.75;
+
+  /* ---- Layout ------------------------------------------------------- */
+  /* Figma grid style "12 column": 120px margin, 20px gutter */
+  --gutter: clamp(1.5rem, 8.33vw, 7.5rem);
+  --max-w: 1200px;          /* 1440 - (120 * 2) */
+  --header-h: clamp(4.5rem, 7vw, 6.5rem);
+
+  /* ---- Motion ------------------------------------------------------- */
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur: 900ms;
+}

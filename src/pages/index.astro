@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import Backdrop from '../components/Backdrop.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/sections/Hero.astro';
+import Team from '../components/sections/Team.astro';
+import Projects from '../components/sections/Projects.astro';
+import Contact from '../components/sections/Contact.astro';
+---
+
+<Base>
+  <Backdrop />
+  <Header />
+
+  <main class="stack">
+    <Hero />
+    <Team />
+    <Projects />
+    <Contact />
+  </main>
+</Base>
+
+<style>
+  /* Sits above the fixed backdrop; the page scrolls normally over it. */
+  .stack { position: relative; z-index: 1; }
+</style>
+
+<script>
+  const backdrop = document.querySelector<HTMLElement>('[data-backdrop]');
+  const sections = document.querySelectorAll<HTMLElement>('[data-section]');
+  const revealables = document.querySelectorAll<HTMLElement>('.reveal');
+
+  // Which section owns the backdrop right now. Whichever tracked section
+  // covers the most of the viewport wins, so the handover is unambiguous
+  // even while two sections overlap mid-scroll.
+  if (backdrop && sections.length) {
+    const ratios = new Map<HTMLElement, number>();
+
+    const sectionObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          ratios.set(entry.target as HTMLElement, entry.intersectionRatio);
+        }
+        let best: HTMLElement | null = null;
+        let bestRatio = 0;
+        for (const [el, ratio] of ratios) {
+          if (ratio > bestRatio) { bestRatio = ratio; best = el; }
+        }
+        if (best) backdrop.dataset.active = best.dataset.section!;
+      },
+      { threshold: [0, 0.15, 0.3, 0.5, 0.7, 0.9, 1] },
+    );
+
+    sections.forEach((section) => sectionObserver.observe(section));
+  }
+
+  // One-shot reveal for content as it scrolls in.
+  if (revealables.length) {
+    const revealObserver = new IntersectionObserver(
+      (entries, observer) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
+      },
+      { threshold: 0.2, rootMargin: '0px 0px -8% 0px' },
+    );
+
+    revealables.forEach((el) => revealObserver.observe(el));
+  }
+</script>
