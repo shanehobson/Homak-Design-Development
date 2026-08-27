@@ -77,12 +77,14 @@ a component.
     title: 'Example',
     category: 'Sector / Location',
     description: 'Shown in the modal.',
-    stack: ['Astro', 'AWS'],
     poster: exampleImage,     // imported from src/assets/projects
     video: '/videos/x.mp4',   // optional — omit for a still-only card
     url: 'https://example.com',
   }
   ```
+
+  Descriptions describe the product and who it is for, not how it was
+  built — the modal deliberately carries no technology listing.
 
   A card with no `video` opens the modal to a still and its description
   instead. The carousel arrows enable themselves once there are more projects
