@@ -20,6 +20,8 @@
 
   /* ---- Type --------------------------------------------------------- */
   --font: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;
+  /* Figma text style "Title" — display face, single weight (400). */
+  --font-display: 'Bruno Ace', ui-sans-serif, system-ui, sans-serif;
 
   /* Figma text styles. Sizes are the 1440px values; clamp() scales down. */
   --t-hero:   clamp(2.5rem, 7.25vw, 6.5rem);   /* 104px — hero H1        */
