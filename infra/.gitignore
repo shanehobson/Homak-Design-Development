@@ -1,0 +1,8 @@
+node_modules
+cdk.out
+*.js
+*.d.ts
+.cdk.staging
+
+# local-only config (account ID, hosted zone)
+config.local.ts

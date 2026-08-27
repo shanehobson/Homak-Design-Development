@@ -1,5 +1,10 @@
 # build output
 dist/
+
+# hosted media — lives in the S3 media bucket, not the repo.
+# `npm run media:pull` (in infra/) fetches a local copy for dev.
+public/videos/
+
 # generated types
 .astro/
 

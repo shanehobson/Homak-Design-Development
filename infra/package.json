@@ -1,0 +1,31 @@
+{
+  "name": "homak-infra",
+  "private": true,
+  "version": "0.0.1",
+  "type": "commonjs",
+  "bin": {
+    "homak": "bin/homak.ts"
+  },
+  "scripts": {
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "diff": "cdk diff",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "media:push": "./scripts/media-push.sh",
+    "media:pull": "./scripts/media-pull.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "aws-cdk": "^2.1031.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.170.0",
+    "constructs": "^10.4.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

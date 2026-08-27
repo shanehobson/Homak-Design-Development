@@ -54,7 +54,11 @@ src/
 ```
 
 `public/videos/` holds project videos. They are deliberately kept out of
-`src/assets` so Astro's image pipeline ignores them.
+`src/assets` so Astro's image pipeline ignores them, and out of git — the files
+are served from an S3 media bucket via CloudFront, on the same origin as the
+site, so markup keeps using plain `/videos/...` paths. After a fresh clone run
+`cd infra && npm run media:pull` to get a local copy for `astro dev`. See
+[`infra/README.md`](infra/README.md).
 
 ## Content
 
