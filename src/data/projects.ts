@@ -22,14 +22,14 @@ export interface Project {
 
 export const projects: Project[] = [
   {
-    slug: 'nightingale-nails',
-    title: 'Nightingale Nails',
-    category: 'Nail salon / Denver, CO',
+    slug: 'zaera',
+    title: 'Zaera',
+    category: 'Scheduling & payments platform',
     description:
-      'A site for a Denver nail salon, with a contact form that lands enquiries straight in the owner’s inbox.',
-    poster: nightingale,
-    video: '/videos/nightingale.mp4',
-    url: 'https://nails-git-main-shane-hobsons-projects.vercel.app/',
+      'An all-in-one platform for service businesses. Booking, payments, and customer messaging live in a single dashboard, so owners stop juggling calendars and chasing invoices. Clients get a branded booking page, and staff schedules are colour-coded so two people never land in the same slot.',
+    poster: zaera,
+    video: '/videos/zaera.mp4',
+    url: 'https://zaera.io/',
   },
   {
     slug: 'max-manicure',
@@ -42,14 +42,14 @@ export const projects: Project[] = [
     url: 'https://www.maxmanicure.com/',
   },
   {
-    slug: 'zaera',
-    title: 'Zaera',
-    category: 'Scheduling & payments platform',
+    slug: 'nightingale-nails',
+    title: 'Nightingale Nails',
+    category: 'Nail salon / Denver, CO',
     description:
-      'An all-in-one platform for service businesses. Booking, payments, and customer messaging live in a single dashboard, so owners stop juggling calendars and chasing invoices. Clients get a branded booking page, and staff schedules are colour-coded so two people never land in the same slot.',
-    poster: zaera,
-    video: '/videos/zaera.mp4',
-    url: 'https://zaera.io/',
+      'A site for a Denver nail salon, with a contact form that lands enquiries straight in the owner’s inbox.',
+    poster: nightingale,
+    video: '/videos/nightingale.mp4',
+    url: 'https://nails-git-main-shane-hobsons-projects.vercel.app/',
   },
   {
     slug: 'science-of-dance',
@@ -62,15 +62,6 @@ export const projects: Project[] = [
     url: 'https://d115owle18y2b1.cloudfront.net/',
   },
   {
-    slug: 'vault',
-    title: 'Vault',
-    category: 'Personal photo & video storage',
-    description:
-      'A private home for every photo and video off your phone, tablet, or laptop. Uploads go straight to your own cloud storage, and the whole library stays browsable by month and year — any point in the timeline is one gesture away, with nothing to wait for in between.',
-    poster: vault,
-    video: '/videos/vault.mp4',
-  },
-  {
     slug: 'odyssey',
     title: 'Odyssey',
     category: 'AI travel planning',
@@ -79,6 +70,15 @@ export const projects: Project[] = [
     poster: odyssey,
     video: '/videos/odyssey.mp4',
     url: 'https://www.findmyodyssey.com/',
+  },
+  {
+    slug: 'vault',
+    title: 'Vault',
+    category: 'Personal photo & video storage',
+    description:
+      'A private home for every photo and video off your phone, tablet, or laptop. Uploads go straight to your own cloud storage, and the whole library stays browsable by month and year — any point in the timeline is one gesture away, with nothing to wait for in between.',
+    poster: vault,
+    video: '/videos/vault.mp4',
   },
   {
     slug: 'lumina-model-academy',
