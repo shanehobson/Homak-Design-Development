@@ -97,16 +97,19 @@ the `#00a0c4` accent, the Montserrat text styles, and the 12-column grid with
 its 120px margin.
 
 One deviation is worth knowing about. The Figma export of the `background` paint
-style omits its gradient transform, and running those stops as a plain
-corner-to-corner linear washes out the whole viewport. The comps show the ramp
-confined to a bloom in the upper-left, so `Backdrop.astro` runs the same stops
-along a radial anchored just off that corner: the bright core sits off-canvas
-and only the falloff is visible.
+style omits its gradient transform, so the corner glow is reconstructed rather
+than transcribed: `.section::before` in `global.css` runs a radial anchored on
+the top-left corner, with its stops fitted to colours sampled off the comp (peak
+#5d5d5d in the corner, still ~#232323 at the bottom-left). It lives on the
+section, not on the fixed backdrop, because every comp artboard carries its own
+glow and sections are no longer exactly viewport-height. The stops are written
+as white-over-base alpha, not the opaque greys they sample to, so the backdrop's
+sculptures still read through the layer.
 
 ## How the scroll works
 
-`Backdrop.astro` renders once, fixed at `z-index: 0`, and never moves. The page
-content scrolls over it at `z-index: 1`.
+`Backdrop.astro` renders once, fixed at `z-index: 0`, and never moves — it
+carries the sculptures only. The page content scrolls over it at `z-index: 1`.
 
 An `IntersectionObserver` in `index.astro` tracks each `<section>` and writes the
 one covering the most of the viewport to `data-active` on the backdrop. CSS then

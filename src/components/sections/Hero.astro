@@ -24,7 +24,9 @@ import { site, projectEnquiry } from '../../data/site';
 </section>
 
 <style>
-  .hero { padding-bottom: 7rem; }
+  /* The hero is the one section that sits under the fixed header, so it
+     swaps the shared top bias for header clearance. */
+  .hero { padding-top: calc(var(--header-h) + 2.5rem); padding-bottom: 7rem; }
 
   .hero__title {
     font-size: var(--t-hero);

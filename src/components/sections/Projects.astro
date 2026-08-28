@@ -89,7 +89,8 @@ import VideoModal from '../VideoModal.astro';
   .track {
     list-style: none;
     margin: 0;
-    padding: 0.5rem 0 1.5rem;
+    /* Trailing space is only gutter for a scrollbar that is hidden below. */
+    padding: 0.5rem 0 0.75rem;
     display: flex;
     gap: clamp(1rem, 2.5vw, 2rem);
     overflow-x: auto;
