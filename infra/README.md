@@ -14,6 +14,12 @@ npm install
 hosted zone ID, and the local AWS profile name. See `config.example.ts` for the
 schema. The account is already CDK-bootstrapped in `us-east-1`.
 
+Note that `profile` is read automatically **only** by the media scripts, which
+source it in `scripts/_common.sh`. The CDK app itself never reads
+`config.local.ts` for credentials — it takes only `account` and `hostedZoneId`
+from there, and resolves credentials the way any AWS SDK client does. So a
+`cdk` command needs the profile in the environment; see below.
+
 ## Deploy
 
 From the repo root:
@@ -21,12 +27,34 @@ From the repo root:
 ```bash
 npm run build                 # astro build -> dist/
 cd infra
+export AWS_PROFILE=<the `profile` from config.local.ts>
 npx cdk diff                  # review changes
 npx cdk deploy
 ```
 
+Without `AWS_PROFILE` (or a `--profile` flag), `cdk` fails before it reaches the
+stack:
+
+```
+Need to perform AWS calls for account <account>, but no credentials have been configured
+```
+
+That is expected rather than a broken setup — unlike `media:push` / `media:pull`,
+`cdk` does not read the profile out of `config.local.ts`. To avoid typing it,
+pull it from the same place the media scripts do:
+
+```bash
+export AWS_PROFILE="$(sed -n 's/.*profile: *"\([^"]*\)".*/\1/p' config.local.ts)"
+```
+
 The deploy uploads `dist/` to the site bucket, prunes anything it did not
 upload, and invalidates the distribution.
+
+A content-only release — new or changed pages and assets, no infrastructure
+edits — shows up in `cdk diff` as a single changed `SourceObjectKeys` hash on
+`DeploySite/CustomResource`, and nothing else. Anything touching the
+distribution, certificate, DNS records or the buckets means the stack itself
+changed, so read it carefully before deploying.
 
 ## Stack
 
