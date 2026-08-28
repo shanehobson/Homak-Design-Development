@@ -108,14 +108,15 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
   /* The comp's Team artboard carries the glow and nothing else. */
 
   @media (max-width: 760px) {
-    /* Now that the render is uncropped, the hero knot reads as a whole object
-       on mobile: seated on the lower right with its bottom loop clear of the
-       panel edge, rather than running off a hard horizontal cut. */
+    /* Framed the way the desktop hero is: the form runs off the right edge of
+       the viewport rather than sitting whole inside it. Seated low so the
+       overhang crops the sculpture's side, not its bottom loop — the same
+       read as the comp, scaled to the narrow panel. */
     .knot--hero {
       top: auto;
-      bottom: 4%;
-      right: 3vw;
-      height: 46%;
+      bottom: 2%;
+      right: -22vw;
+      height: 62%;
       transform: scale(1.06);
     }
     .backdrop[data-active='hero'] .knot--hero {
