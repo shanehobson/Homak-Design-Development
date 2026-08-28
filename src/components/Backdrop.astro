@@ -1,7 +1,8 @@
 ---
 import { Image } from 'astro:assets';
-import knotBright from '../assets/sculptures/knot-bright.png';
-import knotHero from '../assets/sculptures/knot-hero-raw.png';
+import filament from '../assets/sculptures/filament.png';
+import knotHero from '../assets/sculptures/knot-hero.png';
+import knotWhisper from '../assets/sculptures/knot-whisper.png';
 ---
 
 {/* Fixed behind everything; content scrolls over it. The corner glow lives on
@@ -9,13 +10,9 @@ import knotHero from '../assets/sculptures/knot-hero-raw.png';
     does — this layer carries the sculptures only, each fading in when its
     section enters the viewport. */}
 <div class="backdrop" data-backdrop aria-hidden="true">
-  <Image class="knot knot--hero" src={knotHero} alt="" widths={[560, 1120]} loading="eager" />
-  {/* INTERIM: the comps put a wispy filament knot above the Projects title and
-      a faint spiky form bottom-right (mirrored bottom-left on Contact). Those
-      two renders don't exist yet, so the existing pair stands in at the comp's
-      brightness — only their specular edges survive at `--whisper`. */}
-  <Image class="knot knot--filament" src={knotHero} alt="" widths={[720, 1440]} loading="lazy" />
-  <Image class="knot knot--spike" src={knotBright} alt="" widths={[520, 1040]} loading="lazy" />
+  <Image class="knot knot--hero" src={knotHero} alt="" widths={[560, 902]} loading="eager" />
+  <Image class="knot knot--filament" src={filament} alt="" widths={[730]} loading="lazy" />
+  <Image class="knot knot--spike" src={knotWhisper} alt="" widths={[520, 1000]} loading="lazy" />
 </div>
 
 <style>
@@ -28,13 +25,21 @@ import knotHero from '../assets/sculptures/knot-hero-raw.png';
 
     /* The comps draw the Projects/Contact sculptures as whispers: the
        brightest pixel across either form is #1b1b1d, seven levels above the
-       #141414 base. Near-white specular over that base needs ~0.035. */
-    --whisper: 0.035;
+       #141414 base. Unlike the hero render, `filament.png` and
+       `knot-whisper.png` arrive pre-faded — their alpha peaks at ~0.10 rather
+       than 1 — so the multiplier that lands them on #1b1b1d is 0.28, not the
+       0.035 an opaque render needs. Measured per asset by compositing over the
+       base: filament 0.292, whisper 0.271. */
+    --whisper: 0.28;
   }
 
   .knot {
     position: absolute;
     width: auto;
+    /* The global reset caps images at `max-width: 100%`. These are backdrop
+       forms that deliberately overhang the viewport, and the cap would squash
+       them against their fixed height rather than let them bleed. */
+    max-width: none;
     opacity: 0;
     transition:
       opacity 1200ms var(--ease),
@@ -42,40 +47,54 @@ import knotHero from '../assets/sculptures/knot-hero-raw.png';
     will-change: opacity, transform;
   }
 
-  /* Both renders are transparent chrome on alpha — no blend mode needed. */
+  /* All three renders are transparent chrome on alpha — no blend mode needed,
+     and all three carry margin on every side, so nothing here has to be sized
+     or offset to push a hard crop edge out of frame. Vertical sizing is `%` of
+     `.backdrop` rather than `vh`: this layer is `position: fixed`, so on mobile
+     its box (and the `overflow: hidden` that clips it) tracks the small
+     viewport while `vh` tracks the large one, and that gap is what used to cut
+     a straight line across the hero sculpture. */
+
+  /* Bottom-right, bleeding off both edges the way the comp's hero artboard
+     does. 195% reproduces the framing the old 558x736 crop gave at 108%: that
+     crop was the top-left corner of this same render, 736 of its 1326 rows. */
   .knot--hero {
-    top: 52%;
-    right: -7vw;
-    height: 108vh;
-    transform: translateY(-50%) scale(1.06);
+    top: -2%;
+    right: -35vw;
+    height: 195%;
+    transform: scale(1.06);
   }
 
-  /* Upper-left of centre, behind and above the "Our projects" title. */
+  /* Upper-left of centre, behind and above the "Our projects" title. This
+     render is landscape, so it spans the panel at its natural proportions —
+     the form fades out on its own well inside the right edge instead of
+     stopping at a seam. Cropped at the top only, which `top` keeps offscreen. */
   .knot--filament {
-    top: -18vh;
-    left: 4vw;
-    height: 130vh;
+    top: -8%;
+    left: -6vw;
+    width: 106vw;
+    height: auto;
     transform: translateY(24px);
   }
 
   .knot--spike {
-    right: -8vw;
-    bottom: -14vh;
-    height: 68vh;
+    right: -6vw;
+    bottom: -12%;
+    height: 78%;
     transform: translateY(40px) rotate(-6deg);
   }
 
   /* Contact reuses the same form, mirrored to the bottom-left. */
   .backdrop[data-active='contact'] .knot--spike {
     right: auto;
-    left: -8vw;
+    left: -6vw;
     scale: -1 1;
   }
 
   /* Section in view -> its sculpture appears. */
   .backdrop[data-active='hero'] .knot--hero {
     opacity: 1;
-    transform: translateY(-50%) scale(1);
+    transform: scale(1);
   }
   .backdrop[data-active='work'] .knot--filament {
     opacity: var(--whisper);
@@ -89,12 +108,22 @@ import knotHero from '../assets/sculptures/knot-hero-raw.png';
   /* The comp's Team artboard carries the glow and nothing else. */
 
   @media (max-width: 760px) {
-    /* Drop the hero sculpture back so it reads as texture behind the copy
-       rather than competing with it. */
-    .knot--hero { top: 68%; height: 48vh; right: -22vw; }
-    .knot--filament { height: 80vh; left: -10vw; top: -8vh; }
-    .knot--spike { height: 34vh; right: -18vw; bottom: -6vh; }
-    .backdrop[data-active='hero'] .knot--hero { opacity: 0.32; }
+    /* Now that the render is uncropped, the hero knot reads as a whole object
+       on mobile: seated on the lower right with its bottom loop clear of the
+       panel edge, rather than running off a hard horizontal cut. */
+    .knot--hero {
+      top: auto;
+      bottom: 4%;
+      right: 3vw;
+      height: 46%;
+      transform: scale(1.06);
+    }
+    .backdrop[data-active='hero'] .knot--hero {
+      opacity: 0.32;
+      transform: scale(1);
+    }
+    .knot--filament { top: -4%; left: -14vw; width: 128vw; }
+    .knot--spike { height: 42%; right: -14vw; bottom: -6%; }
   }
 
   /* No JS: show the sculptures rather than an empty gradient. */
