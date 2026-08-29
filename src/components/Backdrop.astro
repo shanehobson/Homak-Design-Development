@@ -123,15 +123,21 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
        shape still reads as the knot: -65vw was tried and left only the outer
        loop, which reads as an anonymous curve rather than the sculpture.
 
-       At 68% the form is a little larger than the panel strictly needs,
-       which is what lets it sit this low — the extra height is spent below
-       the fold, so the bottom loop leaves the viewport instead of stopping
-       inside it and drawing a visible edge. */
+       The form is larger than the panel strictly needs, which is what lets
+       it sit this low — the extra height is spent below the fold, so the
+       bottom loop leaves the viewport instead of stopping inside it and
+       drawing a visible edge.
+
+       `bottom` is a percentage rather than a pixel offset so the drop scales
+       with the viewport: -14% puts the form's lower edge about 100px below
+       the fold on a 390x844 phone, and proportionally less on a shorter one,
+       which keeps the framing the same instead of swallowing the sculpture
+       on small screens. */
     .knot--hero {
       top: auto;
-      bottom: -2%;
+      bottom: -14%;
       right: -52vw;
-      height: 68%;
+      height: 74%;
       transform: scale(1.06);
     }
     .backdrop[data-active='hero'] .knot--hero {
