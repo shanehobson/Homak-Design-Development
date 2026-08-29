@@ -111,11 +111,18 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
     /* Framed the way the desktop hero is: the form runs off the right edge of
        the viewport rather than sitting whole inside it. Seated low so the
        overhang crops the sculpture's side, not its bottom loop — the same
-       read as the comp, scaled to the narrow panel. */
+       read as the comp, scaled to the narrow panel.
+
+       `right` matches the desktop rule's -35vw, which is what makes the two
+       breakpoints agree on how much of the form the edge takes: at 390x844
+       the sculpture is 356px wide and 136px of it — 38% — falls outside the
+       viewport, against 42% on a 1440-wide desktop. The earlier -22vw clipped
+       only 24%, which read as a whole object nudged off-centre rather than a
+       form the frame cuts into. */
     .knot--hero {
       top: auto;
       bottom: 2%;
-      right: -22vw;
+      right: -35vw;
       height: 62%;
       transform: scale(1.06);
     }
