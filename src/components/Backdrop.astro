@@ -113,16 +113,17 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
        overhang crops the sculpture's side, not its bottom loop — the same
        read as the comp, scaled to the narrow panel.
 
-       `right` matches the desktop rule's -35vw, which is what makes the two
-       breakpoints agree on how much of the form the edge takes: at 390x844
-       the sculpture is 356px wide and 136px of it — 38% — falls outside the
-       viewport, against 42% on a 1440-wide desktop. The earlier -22vw clipped
-       only 24%, which read as a whole object nudged off-centre rather than a
-       form the frame cuts into. */
+       Mobile bleeds harder than desktop rather than matching it. Desktop's
+       -35vw clips about 42% of the form; at 390x844 the same value clipped
+       38%, and at that width the sculpture still read as a whole object
+       nudged off-centre. -65vw clips 254px of its 356px — 71% — leaving the
+       outer loop and the arc through the panel, which is what makes the edge
+       feel like a crop instead of a margin. Going much past this drops the
+       last of the inner loops and it stops reading as a sculpture. */
     .knot--hero {
       top: auto;
       bottom: 2%;
-      right: -35vw;
+      right: -65vw;
       height: 62%;
       transform: scale(1.06);
     }
