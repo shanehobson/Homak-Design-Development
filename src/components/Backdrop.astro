@@ -118,10 +118,11 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
        38%, and at that width the sculpture still read as a whole object
        nudged off-centre rather than one the frame cuts into.
 
-       -52vw clips about half the form, keeping the left arc and one inner
-       loop on screen. That is roughly the most the edge can take while the
-       shape still reads as the knot: -65vw was tried and left only the outer
-       loop, which reads as an anonymous curve rather than the sculpture.
+       -47vw clips about 43% of the form, keeping the left arc and one inner
+       loop on screen. The edge can take a good deal more before the shape
+       stops reading as the knot — -65vw was tried and left only the outer
+       loop, an anonymous curve rather than the sculpture — but this sits
+       comfortably short of that.
 
        The form is larger than the panel strictly needs, which is what lets
        it sit this low — the extra height is spent below the fold, so the
@@ -137,7 +138,7 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
     .knot--hero {
       top: auto;
       bottom: -20%;
-      right: -52vw;
+      right: -47vw;
       height: 74%;
       transform: scale(1.06);
     }
