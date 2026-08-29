@@ -116,14 +116,16 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
        Mobile bleeds harder than desktop rather than matching it. Desktop's
        -35vw clips about 42% of the form; at 390x844 the same value clipped
        38%, and at that width the sculpture still read as a whole object
-       nudged off-centre. -65vw clips 254px of its 356px — 71% — leaving the
-       outer loop and the arc through the panel, which is what makes the edge
-       feel like a crop instead of a margin. Going much past this drops the
-       last of the inner loops and it stops reading as a sculpture. */
+       nudged off-centre rather than one the frame cuts into.
+
+       -55vw clips 215px of its 356px — 60% — which keeps the left arc and
+       one inner loop on screen. That is the most the edge can take while the
+       form still reads as the knot: -65vw was tried and left only the outer
+       loop, which reads as an anonymous curve rather than the sculpture. */
     .knot--hero {
       top: auto;
       bottom: 2%;
-      right: -65vw;
+      right: -55vw;
       height: 62%;
       transform: scale(1.06);
     }

@@ -136,16 +136,37 @@ function handler(event) {
     new s3deploy.BucketDeployment(this, "DeploySite", {
       /* `videos/` is excluded: a developer's local copy of the media sits in
          `public/`, so the build emits it, but it is served from the media
-         bucket. Shipping it here too would duplicate the bytes. */
+         bucket. Shipping it here too would duplicate the bytes.
+
+         `.DS_Store` is excluded because Finder writes one into `dist/` on a
+         developer's machine and the deployment would otherwise serve it: it
+         was reachable at https://homak.dev/.DS_Store, publishing local file
+         and folder names. `prune` removes the already-uploaded copy. */
       sources: [
         s3deploy.Source.asset(path.join(__dirname, "..", siteDistPath), {
-          exclude: ["videos", "videos/**"],
+          exclude: ["videos", "videos/**", ".DS_Store", "**/.DS_Store"],
         }),
       ],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ["/*"],
       prune: true,
+
+      /* Without this the objects carry no `Cache-Control` at all, and a
+         browser given neither that nor `Expires` falls back to heuristic
+         freshness — roughly 10% of the age since `Last-Modified`, so the
+         longer a file sits unchanged the longer a phone holds it. The
+         invalidation above only clears CloudFront, never a copy already in
+         someone's browser, which is why deploys appeared not to land.
+
+         One value covers every object. Only `index.html` actually needs it:
+         everything under `_astro/` is content-hashed, so a stale copy is
+         harmless by construction and could be cached forever. Splitting the
+         two would take a second BucketDeployment, and with `prune` on, two
+         unscoped deployments delete each other's files. At 1.9 MB of assets
+         that revalidate to a 304 on their ETag, the split is not worth the
+         footgun. */
+      cacheControl: [s3deploy.CacheControl.fromString("max-age=60, must-revalidate")],
     });
 
     new CfnOutput(this, "DistributionId", { value: distribution.distributionId });
