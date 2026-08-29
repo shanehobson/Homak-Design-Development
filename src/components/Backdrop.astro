@@ -129,13 +129,14 @@ import knotWhisper from '../assets/sculptures/knot-whisper.png';
        drawing a visible edge.
 
        `bottom` is a percentage rather than a pixel offset so the drop scales
-       with the viewport: -14% puts the form's lower edge about 100px below
+       with the viewport: -20% puts the form's lower edge about 150px below
        the fold on a 390x844 phone, and proportionally less on a shorter one,
        which keeps the framing the same instead of swallowing the sculpture
-       on small screens. */
+       on small screens. About three quarters of the form's height is still
+       above the fold at that offset. */
     .knot--hero {
       top: auto;
-      bottom: -14%;
+      bottom: -20%;
       right: -52vw;
       height: 74%;
       transform: scale(1.06);
