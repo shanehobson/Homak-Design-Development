@@ -1,5 +1,5 @@
-import ksenia from '../assets/team/ksenia.png';
-import shane from '../assets/team/shane.png';
+import ksenia from '../assets/team/ksenia.webp';
+import shane from '../assets/team/shane.webp';
 
 export const team = [
   {

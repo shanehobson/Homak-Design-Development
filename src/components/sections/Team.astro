@@ -10,12 +10,17 @@ import { team, teamBio } from '../../data/team';
     <ul class="grid">
       {team.map((person, i) => (
         <li class="card reveal" style={`--reveal-delay: ${120 + i * 120}ms`}>
+          {/* The cards render the photo at ~314px on mobile and ~282-318px on
+              desktop, so 2x/3x screens need the 608 and 912 candidates. Both
+              sources are 4:5 and over 1000px wide, which is what keeps those
+              two generating -- sharp will not upscale past the intrinsic width. */}
           <Image
             class="card__photo"
             src={person.photo}
             alt={`${person.name}, ${person.role}`}
-            widths={[304, 608]}
-            sizes="(max-width: 760px) 80vw, 380px"
+            widths={[304, 608, 912]}
+            sizes="(max-width: 620px) 314px, 318px"
+            quality={90}
           />
           <div class="card__meta">
             <p class="card__name">{person.name}</p>
