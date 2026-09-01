@@ -13,4 +13,7 @@ new SiteStack(app, "HomakSite", {
   domainName: "homak.dev",
   hostedZoneId: localConfig.hostedZoneId,
   siteDistPath: "../dist",
+  sendingDomain: localConfig.sendingDomain,
+  fromEmail: localConfig.fromEmail,
+  toEmails: localConfig.toEmails,
 });

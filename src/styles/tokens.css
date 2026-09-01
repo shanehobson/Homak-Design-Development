@@ -17,6 +17,7 @@
   --text-muted: #ffffffab;     /* white @ 67% — from usedColors */
   --text-faint: #ffffff80;
   --hairline: #ffffff24;
+  --danger: #ff6b6b;           /* invalid form fields — not in the Figma set */
 
   /* ---- Type --------------------------------------------------------- */
   --font: 'Montserrat Variable', ui-sans-serif, system-ui, sans-serif;

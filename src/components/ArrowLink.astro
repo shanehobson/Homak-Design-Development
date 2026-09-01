@@ -1,21 +1,40 @@
 ---
 /* The bordered "START A PROJECT ↗" control. `size` maps to the two Figma
-   text styles: "menu" (14px) in the header, "start project" (20px) in the hero. */
+   text styles: "menu" (14px) in the header, "start project" (20px) in the hero.
+
+   Renders an `<a>` when given an `href` and a `<button>` otherwise, so the
+   same control can submit the enquiry form. Everything else in `Props` is
+   passed straight through, which is how the CTAs pick up `data-enquiry`. */
 interface Props {
-  href: string;
+  href?: string;
+  type?: 'button' | 'submit';
   size?: 'sm' | 'lg';
   class?: string;
+  [key: string]: unknown;
 }
-const { href, size = 'sm', class: klass } = Astro.props;
+const { href, type = 'button', size = 'sm', class: klass, ...rest } = Astro.props;
+const classes = ['cta', `cta--${size}`, klass];
 ---
 
-<a href={href} class:list={['cta', `cta--${size}`, klass]}>
-  <span><slot /></span>
-  <svg class="arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-    <path d="M4 12 12 4M12 4H5.5M12 4v6.5" stroke="currentColor" stroke-width="1.25"
-          stroke-linecap="round" stroke-linejoin="round" />
-  </svg>
-</a>
+{
+  href ? (
+    <a href={href} class:list={classes} {...rest}>
+      <span><slot /></span>
+      <svg class="arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M4 12 12 4M12 4H5.5M12 4v6.5" stroke="currentColor" stroke-width="1.25"
+              stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </a>
+  ) : (
+    <button type={type} class:list={classes} {...rest}>
+      <span><slot /></span>
+      <svg class="arrow" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M4 12 12 4M12 4H5.5M12 4v6.5" stroke="currentColor" stroke-width="1.25"
+              stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+    </button>
+  )
+}
 
 <style>
   .cta {
@@ -46,4 +65,8 @@ const { href, size = 'sm', class: klass } = Astro.props;
     border-color: var(--accent);
   }
   .cta:hover .arrow { transform: translate(2px, -2px); }
+
+  .cta:disabled { opacity: 0.5; cursor: default; }
+  .cta:disabled:hover { background-color: transparent; }
+  .cta:disabled:hover .arrow { transform: none; }
 </style>

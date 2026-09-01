@@ -30,3 +30,8 @@ pnpm-debug.log*
 
 # claude code local settings
 .claude/settings.local.json
+
+# local planning docs — PLAN-enquiry-form.md records the SES recipient
+# addresses and the account id, which are deliberately kept out of git
+# (see infra/config.local.ts).
+PLAN*.md

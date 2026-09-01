@@ -7,6 +7,11 @@ import * as acm from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
+import * as iam from "aws-cdk-lib/aws-iam";
+import * as ses from "aws-cdk-lib/aws-ses";
+import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as path from "path";
 
 export interface SiteStackProps extends StackProps {
@@ -14,13 +19,24 @@ export interface SiteStackProps extends StackProps {
   hostedZoneId: string;
   /** Astro build output, relative to the infra package root. */
   siteDistPath: string;
+  /** Domain SES signs enquiry mail for — the hosted zone above. */
+  sendingDomain: string;
+  /** Envelope From for enquiry mail; an address on `sendingDomain`. */
+  fromEmail: string;
+  /**
+   * Enquiry recipients. The SES account is in the sandbox, so each of these
+   * has to be a verified identity in this region. Supplied from the
+   * gitignored `config.local.ts` — personal inboxes stay out of the repo.
+   */
+  toEmails: readonly string[];
 }
 
 export class SiteStack extends Stack {
   constructor(scope: Construct, id: string, props: SiteStackProps) {
     super(scope, id, props);
 
-    const { domainName, hostedZoneId, siteDistPath } = props;
+    const { domainName, hostedZoneId, siteDistPath, sendingDomain, fromEmail, toEmails } =
+      props;
     const wwwDomain = `www.${domainName}`;
 
     const hostedZone = route53.PublicHostedZone.fromPublicHostedZoneAttributes(
@@ -52,6 +68,24 @@ export class SiteStack extends Stack {
       domainName,
       subjectAlternativeNames: [wwwDomain],
       validation: acm.CertificateValidation.fromDns(hostedZone),
+    });
+
+    /* Domain identity for the enquiry form's Lambda. CDK writes the DKIM
+       CNAMEs and the custom MAIL FROM MX/SPF records into the hosted zone,
+       so the mail is aligned on both SPF and DKIM. */
+    const emailIdentity = new ses.EmailIdentity(this, "SiteEmailIdentity", {
+      identity: ses.Identity.publicHostedZone(hostedZone),
+      mailFromDomain: `mail.${sendingDomain}`,
+    });
+
+    /* Strict alignment, and aggregate reports to the first enquiry recipient
+       — the one inbox we know is already watched. */
+    new route53.TxtRecord(this, "DmarcRecord", {
+      zone: hostedZone,
+      recordName: `_dmarc.${sendingDomain}`,
+      values: [
+        `v=DMARC1; p=quarantine; rua=mailto:${toEmails[0]}; adkim=s; aspf=s; pct=100`,
+      ],
     });
 
     const prettyUrlFunction = new cloudfront.Function(this, "PrettyUrlFunction", {
@@ -122,6 +156,74 @@ function handler(event) {
       },
     );
 
+    /* Per-IP submission counter for the enquiry form. Items carry a TTL and
+       are worthless once expired, so the table is disposable. */
+    const rateLimitTable = new dynamodb.Table(this, "ContactRateLimitTable", {
+      partitionKey: { name: "pk", type: dynamodb.AttributeType.STRING },
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      timeToLiveAttribute: "ttl",
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
+    const contactFn = new NodejsFunction(this, "ContactFunction", {
+      entry: path.join(__dirname, "..", "lambda", "contact", "handler.ts"),
+      handler: "handler",
+      runtime: lambda.Runtime.NODEJS_20_X,
+      timeout: Duration.seconds(10),
+      memorySize: 256,
+      environment: {
+        TO_EMAILS: toEmails.join(","),
+        FROM_EMAIL: fromEmail,
+        RATE_LIMIT_TABLE: rateLimitTable.tableName,
+      },
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        target: "node20",
+        /* Provided by the Node 20 runtime; bundling them only inflates the
+           artefact. */
+        externalModules: ["@aws-sdk/client-sesv2", "@aws-sdk/client-dynamodb"],
+      },
+    });
+
+    rateLimitTable.grantReadWriteData(contactFn);
+
+    contactFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["ses:SendEmail", "ses:SendRawEmail"],
+        resources: [
+          emailIdentity.emailIdentityArn,
+          ...toEmails.map(
+            (email) => `arn:aws:ses:${this.region}:${this.account}:identity/${email}`,
+          ),
+        ],
+      }),
+    );
+
+    /* No CORS block: the browser only ever reaches this through the
+       CloudFront behaviour below, which makes the call same-origin. The
+       Function URL itself stays out of the repo. */
+    const fnUrl = contactFn.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.NONE,
+    });
+
+    /* The distribution's 403/404 -> index.html rewrites are scoped to those
+       two statuses, so the Lambda's own 400/405/429/502 pass through intact.
+       ALL_VIEWER_EXCEPT_HOST_HEADER forwards the body and content-type while
+       leaving Host as the Function URL's own, which its SigV4-less auth
+       still requires. */
+    distribution.addBehavior(
+      "/api/contact",
+      new origins.FunctionUrlOrigin(fnUrl),
+      {
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+        originRequestPolicy:
+          cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      },
+    );
+
     for (const [suffix, recordName] of [
       ["Apex", domainName],
       ["Www", wwwDomain],
@@ -169,6 +271,10 @@ function handler(event) {
       cacheControl: [s3deploy.CacheControl.fromString("max-age=60, must-revalidate")],
     });
 
+    new CfnOutput(this, "ContactFunctionUrl", {
+      value: fnUrl.url,
+      description: "Put in .env at the repo root as CONTACT_FN_URL for local dev",
+    });
     new CfnOutput(this, "DistributionId", { value: distribution.distributionId });
     new CfnOutput(this, "DistributionDomain", { value: distribution.distributionDomainName });
     new CfnOutput(this, "SiteBucketName", { value: siteBucket.bucketName });

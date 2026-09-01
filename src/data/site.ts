@@ -9,7 +9,11 @@ export const site = {
   url: 'https://homak.dev',
 } as const;
 
-/** The header CTA and the hero CTA both point here. Swap for a form/Calendly later. */
+/**
+ * No-JS fallback for every "Start a project" CTA. With JS the same controls
+ * carry `data-enquiry` and open `EnquiryModal.astro` instead, which POSTs to
+ * `/api/contact`; the href is only followed when that script has not run.
+ */
 export const projectEnquiry = `mailto:${site.email}?subject=${encodeURIComponent(
   'New project enquiry',
 )}`;

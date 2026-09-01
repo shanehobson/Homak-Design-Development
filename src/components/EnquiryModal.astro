@@ -1,0 +1,302 @@
+---
+import ArrowLink from './ArrowLink.astro';
+import { site } from '../data/site';
+
+/* The "Start a project" form. One dialog for the whole page — every CTA
+   carrying `data-enquiry` opens it. Submits JSON to `/api/contact`, which
+   CloudFront routes to the contact Lambda (see infra/lambda/contact). */
+---
+
+<dialog class="modal" data-enquiry-modal data-enquiry-email={site.email}
+        aria-labelledby="enquiry-title">
+  <div class="modal__inner">
+    <button class="modal__close" type="button" data-enquiry-close aria-label="Close">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" />
+      </svg>
+    </button>
+
+    <h3 class="modal__title" id="enquiry-title">Start a project</h3>
+    <p class="modal__lede">
+      Tell us what you're building. We'll come back to you within two business days.
+    </p>
+
+    <form class="form" data-enquiry-form novalidate>
+      <label class="field">
+        <span class="field__label">Name*</span>
+        <input class="field__input" name="name" type="text" required autocomplete="name" />
+      </label>
+
+      <label class="field">
+        <span class="field__label">Email*</span>
+        <input class="field__input" name="email" type="email" required autocomplete="email" />
+      </label>
+
+      <label class="field">
+        <span class="field__label">Phone</span>
+        <input class="field__input" name="phone" type="tel" autocomplete="tel" />
+      </label>
+
+      <label class="field">
+        <span class="field__label">Description</span>
+        <textarea class="field__input" name="description" rows="5"
+                  placeholder="Tell us about your needs"></textarea>
+      </label>
+
+      {/* Honeypot: off-screen and out of the tab order, so only a bot fills it. */}
+      <input class="visually-hidden" name="website" tabindex="-1" autocomplete="off"
+             aria-hidden="true" />
+
+      <p class="form__status" data-enquiry-status role="status" aria-live="polite"></p>
+
+      <ArrowLink type="submit" size="lg" data-enquiry-submit>Send</ArrowLink>
+    </form>
+
+    <div class="done" data-enquiry-done hidden>
+      <p class="done__title">Thanks — we'll be in touch.</p>
+      <p class="done__note">We reply to every enquiry within two business days.</p>
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .modal {
+    width: min(560px, 92vw);
+    max-height: 90dvh;
+    padding: 0;
+    border: 1px solid var(--hairline);
+    background: #0e0e0e;
+    color: var(--text);
+    overflow: auto;
+  }
+  .modal::backdrop { background: #05050ce6; backdrop-filter: blur(6px); }
+
+  .modal__inner { position: relative; padding: clamp(1.5rem, 4vw, 2.5rem); }
+
+  .modal__close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--text);
+    background: #0a0a0aa8;
+    border: 1px solid var(--hairline);
+    transition: border-color 250ms var(--ease);
+  }
+  .modal__close:hover { border-color: var(--accent); }
+  .modal__close svg { width: 1.15rem; height: 1.15rem; }
+
+  .modal__title {
+    font-family: var(--font-display);
+    font-size: var(--t-card);
+    font-weight: 400;
+    line-height: 1.3;
+    /* Clears the close button. */
+    padding-right: 3rem;
+  }
+  .modal__lede { margin-top: 0.75rem; color: var(--text-muted); }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: clamp(1.5rem, 3vw, 2rem);
+    /* The CTA is inline-flex, so without this it stretches the full width. */
+    align-items: stretch;
+  }
+  .form[hidden] { display: none; }
+
+  .field { display: flex; flex-direction: column; gap: 0.5rem; }
+  .field__label {
+    font-size: var(--t-menu);
+    text-transform: uppercase;
+    letter-spacing: var(--track-wide);
+    color: var(--text-faint);
+  }
+
+  /* Fields borrow the CTA's language: a hairline box that picks up the accent
+     on focus. No radius, no filled background. */
+  .field__input {
+    font: inherit;
+    color: var(--text);
+    background: none;
+    border: 1px solid var(--hairline);
+    padding: 0.9em 1em;
+    width: 100%;
+    transition: border-color 250ms var(--ease);
+  }
+  .field__input:hover { border-color: var(--text-faint); }
+  .field__input:focus { outline: none; border-color: var(--accent); }
+  .field__input:focus-visible { outline: none; }
+  .field__input::placeholder { color: var(--text-faint); }
+
+  textarea.field__input { resize: vertical; min-height: 6rem; }
+
+  /* Only after a submit attempt — nobody should be told their email is wrong
+     while they are still typing the first character of it. */
+  .form[data-submitted] .field__input:invalid { border-color: var(--danger); }
+
+  .form__status { font-size: var(--t-menu); color: var(--text-muted); min-height: 1.5em; }
+  .form__status[data-tone='error'] { color: var(--danger); }
+  .form__status a { color: var(--accent); border-bottom: 1px solid currentColor; }
+
+  /* The submit CTA sits left, not stretched across the sheet. */
+  .form :global(.cta) { align-self: flex-start; }
+
+  .done[hidden] { display: none; }
+  .done { margin-top: clamp(1.5rem, 3vw, 2rem); }
+  .done__title { font-size: var(--t-card); }
+  .done__note { margin-top: 0.5rem; color: var(--text-muted); }
+
+  /* Phone: full-bleed sheet, as VideoModal. The UA `<dialog>` defaults (the
+     max-width and the auto margins) have to be reset too, not just the width. */
+  @media (max-width: 760px) {
+    .modal {
+      width: 100vw;
+      max-width: 100vw;
+      height: 100dvh;
+      max-height: 100dvh;
+      margin: 0;
+      border: 0;
+    }
+
+    .modal__inner {
+      min-height: 100%;
+      padding-top: max(3.5rem, calc(env(safe-area-inset-top) + 3.5rem));
+      padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+    }
+
+    .modal__close { top: max(0.75rem, env(safe-area-inset-top)); }
+  }
+</style>
+
+<script>
+  const modal = document.querySelector<HTMLDialogElement>('[data-enquiry-modal]');
+  const form = modal?.querySelector<HTMLFormElement>('[data-enquiry-form]');
+  const statusEl = modal?.querySelector<HTMLElement>('[data-enquiry-status]');
+  const doneEl = modal?.querySelector<HTMLElement>('[data-enquiry-done]');
+  const submitBtn = modal?.querySelector<HTMLButtonElement>('[data-enquiry-submit]');
+
+  if (modal && form && statusEl && doneEl && submitBtn) {
+    let opener: HTMLElement | null = null;
+    const email = modal.dataset.enquiryEmail!;
+
+    const setStatus = (text: string, tone?: 'error') => {
+      statusEl.textContent = text;
+      if (tone) statusEl.dataset.tone = tone;
+      else delete statusEl.dataset.tone;
+    };
+
+    // The mobile drawer is a fixed overlay above the page and locks body
+    // scroll; leaving it up would sit on top of the dialog's backdrop.
+    const closeDrawer = () => {
+      const drawer = document.querySelector<HTMLElement>('[data-drawer]');
+      const toggle = document.querySelector<HTMLElement>('[data-menu-toggle]');
+      if (!drawer || drawer.hidden) return;
+      drawer.hidden = true;
+      toggle?.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    };
+
+    const open = (trigger: HTMLElement) => {
+      opener = trigger;
+      closeDrawer();
+      modal.showModal();
+      modal.querySelector<HTMLInputElement>('input[name="name"]')?.focus();
+    };
+
+    const close = () => {
+      modal.close();
+      setStatus('');
+      // Back to a blank form, so a second enquiry from any CTA starts clean
+      // rather than reopening onto the previous "thanks" panel or onto fields
+      // still flagged red from the last submit attempt.
+      form.reset();
+      delete form.dataset.submitted;
+      form.hidden = false;
+      doneEl.hidden = true;
+      opener?.focus();
+      opener = null;
+    };
+
+    document.querySelectorAll<HTMLElement>('[data-enquiry]').forEach((trigger) =>
+      trigger.addEventListener('click', (e) => {
+        // The CTAs keep their `mailto:` href as the no-JS fallback.
+        e.preventDefault();
+        open(trigger);
+      }),
+    );
+
+    modal.querySelector('[data-enquiry-close]')!.addEventListener('click', close);
+
+    // Click on the backdrop (i.e. outside .modal__inner) closes.
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) close();
+    });
+
+    // Escape closes natively; take it over so the status line is reset and
+    // focus goes back to the CTA that opened the dialog.
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        close();
+      }
+    });
+
+    const failureMessage = () => {
+      statusEl.dataset.tone = 'error';
+      statusEl.replaceChildren(
+        document.createTextNode('Could not send — please email '),
+        Object.assign(document.createElement('a'), {
+          href: `mailto:${email}`,
+          textContent: email,
+        }),
+        document.createTextNode('.'),
+      );
+    };
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // `novalidate` suppresses the browser's own bubbles until here, so the
+      // first report is the one the submit asks for.
+      form.dataset.submitted = '';
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      setStatus('Sending…');
+
+      try {
+        const res = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(Object.fromEntries(new FormData(form))),
+        });
+
+        if (res.ok) {
+          form.hidden = true;
+          doneEl.hidden = false;
+          return;
+        }
+
+        if (res.status === 429) {
+          setStatus('Too many attempts, please try again later.', 'error');
+        } else {
+          failureMessage();
+        }
+      } catch {
+        // Offline, or the dev proxy is not configured.
+        failureMessage();
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+  }
+</script>

@@ -18,7 +18,7 @@ import { nav, projectEnquiry } from '../data/site';
         below actually applies — a class passed into ArrowLink would carry
         that component's scope id instead, not this one's. */}
     <div class="header__cta">
-      <ArrowLink href={projectEnquiry}>Start a project</ArrowLink>
+      <ArrowLink href={projectEnquiry} data-enquiry>Start a project</ArrowLink>
     </div>
 
     <button class="burger" type="button" data-menu-toggle
@@ -35,7 +35,7 @@ import { nav, projectEnquiry } from '../data/site';
   <nav aria-label="Primary (mobile)">
     {nav.map((item) => <a href={item.href} data-drawer-link>{item.label}</a>)}
   </nav>
-  <ArrowLink href={projectEnquiry} size="lg">Start a project</ArrowLink>
+  <ArrowLink href={projectEnquiry} size="lg" data-enquiry>Start a project</ArrowLink>
 </div>
 
 <style>

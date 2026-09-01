@@ -11,8 +11,13 @@ npm install
 ```
 
 `config.local.ts` is gitignored — it holds the AWS account ID, the Route 53
-hosted zone ID, and the local AWS profile name. See `config.example.ts` for the
-schema. The account is already CDK-bootstrapped in `us-east-1`.
+hosted zone ID, the local AWS profile name, and the enquiry form's mail
+settings (`sendingDomain`, `fromEmail`, `toEmails`). See `config.example.ts`
+for the schema. The account is already CDK-bootstrapped in `us-east-1`.
+
+The recipient addresses are personal inboxes and deliberately live only there,
+never in tracked source — grepping the repo for the mail provider's
+domain should turn up nothing.
 
 Note that `profile` is read automatically **only** by the media scripts, which
 source it in `scripts/_common.sh`. The CDK app itself never reads
@@ -67,9 +72,41 @@ changed, so read it carefully before deploying.
 - **ACM certificate** (us-east-1) DNS-validated through the hosted zone
 - **Route 53** A/AAAA aliases for apex and www
 - **CloudFront Function** rewriting pretty URLs to `/index.html`
+- **`SiteEmailIdentity`** — SES domain identity for `homak.dev`, with a
+  `mail.homak.dev` custom MAIL FROM, plus a `_dmarc` TXT record
+- **`ContactRateLimitTable`** — DynamoDB, per-IP submission counter, TTL'd
+- **`ContactFunction`** — Node 20 Lambda behind a Function URL, reached only
+  through the `/api/contact` CloudFront behaviour (so the browser call is
+  same-origin and there is no CORS config, and the Function URL never has to
+  be committed)
 
 Both buckets are `RETAIN` — `cdk destroy` leaves them behind, so a teardown
 never silently deletes the media.
+
+## Enquiry form
+
+The "Start a project" modal POSTs JSON to `/api/contact`. CloudFront routes
+that path to the Lambda, which validates the payload, checks a per-IP rate
+limit (5 per 10 minutes) and a honeypot field, then sends one SES mail with
+the enquirer's address as `Reply-To`.
+
+**The SES account is in the sandbox** (`aws sesv2 get-account` reports
+`ProductionAccessEnabled: false`), which means mail is only delivered to
+*verified* identities. Every address in `toEmails` must therefore already be a
+verified SES identity in `us-east-1`; the two configured ones are. Adding a
+recipient that is not verified makes the send fail with a 502 from the Lambda
+— either verify it first, or request production access.
+
+For local dev, take the `ContactFunctionUrl` stack output and put it in a
+`.env` at the repo root:
+
+```bash
+CONTACT_FN_URL=https://<id>.lambda-url.us-east-1.on.aws/
+```
+
+`astro.config.mjs` proxies `/api/contact` there in dev, so the same fetch works
+against the real Lambda without CORS. Without the variable there is no proxy
+and submissions fail in dev only. `.env` is gitignored; see `.env.example`.
 
 ## Media
 
