@@ -11,7 +11,12 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as ses from "aws-cdk-lib/aws-ses";
+import * as sesActions from "aws-cdk-lib/aws-ses-actions";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as cr from "aws-cdk-lib/custom-resources";
+import { SecretValue } from "aws-cdk-lib";
 import * as path from "path";
 
 export interface SiteStackProps extends StackProps {
@@ -29,14 +34,26 @@ export interface SiteStackProps extends StackProps {
    * gitignored `config.local.ts` — personal inboxes stay out of the repo.
    */
   toEmails: readonly string[];
+  /**
+   * Inbox that mail to hello@<domainName> is forwarded to. Same sandbox rule
+   * as `toEmails`. Supplied from `config.local.ts`.
+   */
+  forwardTo: string;
 }
 
 export class SiteStack extends Stack {
   constructor(scope: Construct, id: string, props: SiteStackProps) {
     super(scope, id, props);
 
-    const { domainName, hostedZoneId, siteDistPath, sendingDomain, fromEmail, toEmails } =
-      props;
+    const {
+      domainName,
+      hostedZoneId,
+      siteDistPath,
+      sendingDomain,
+      fromEmail,
+      toEmails,
+      forwardTo,
+    } = props;
     const wwwDomain = `www.${domainName}`;
 
     const hostedZone = route53.PublicHostedZone.fromPublicHostedZoneAttributes(
@@ -88,10 +105,22 @@ export class SiteStack extends Stack {
       ],
     });
 
+    /* Two jobs on the viewer request. First, www -> apex as a 301, so the
+       two hostnames stop serving duplicate 200s and every link and ranking
+       signal consolidates on one. Second, the pretty-URL rewrite that maps
+       directory paths onto the index.html files Astro emits. */
     const prettyUrlFunction = new cloudfront.Function(this, "PrettyUrlFunction", {
       code: cloudfront.FunctionCode.fromInline(`
 function handler(event) {
   var req = event.request;
+  var host = req.headers.host && req.headers.host.value;
+  if (host === '${wwwDomain}') {
+    return {
+      statusCode: 301,
+      statusDescription: 'Moved Permanently',
+      headers: { location: { value: 'https://${domainName}' + req.uri } },
+    };
+  }
   var uri = req.uri;
   if (uri.endsWith('/')) {
     req.uri = uri + 'index.html';
@@ -125,17 +154,22 @@ function handler(event) {
           },
         ],
       },
+      /* Unknown paths get the built 404 page with a real 404 status. These
+         used to rewrite to index.html with a 200, which made every bad URL a
+         soft 404 that search engines index as a duplicate of the homepage.
+         S3 behind OAC answers a missing key with 403, not 404, so both
+         statuses have to map. */
       errorResponses: [
         {
           httpStatus: 403,
-          responseHttpStatus: 200,
-          responsePagePath: "/index.html",
+          responseHttpStatus: 404,
+          responsePagePath: "/404.html",
           ttl: Duration.minutes(5),
         },
         {
           httpStatus: 404,
-          responseHttpStatus: 200,
-          responsePagePath: "/index.html",
+          responseHttpStatus: 404,
+          responsePagePath: "/404.html",
           ttl: Duration.minutes(5),
         },
       ],
@@ -168,7 +202,7 @@ function handler(event) {
     const contactFn = new NodejsFunction(this, "ContactFunction", {
       entry: path.join(__dirname, "..", "lambda", "contact", "handler.ts"),
       handler: "handler",
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       timeout: Duration.seconds(10),
       memorySize: 256,
       environment: {
@@ -179,8 +213,8 @@ function handler(event) {
       bundling: {
         minify: true,
         sourceMap: false,
-        target: "node20",
-        /* Provided by the Node 20 runtime; bundling them only inflates the
+        target: "node22",
+        /* Provided by the Node 22 runtime; bundling them only inflates the
            artefact. */
         externalModules: ["@aws-sdk/client-sesv2", "@aws-sdk/client-dynamodb"],
       },
@@ -200,6 +234,146 @@ function handler(event) {
       }),
     );
 
+    /* ---- Inbound mail for hello@ ------------------------------------------
+       See EMAIL-PLAN.md. SES receives for the apex, drops the raw message in
+       S3, and a Lambda re-sends it to `forwardTo` as hello@ with Reply-To set
+       to the original sender. */
+    const helloAddress = `hello@${domainName}`;
+
+    /* Receiving is per region, and this is the only MX on the apex. The MAIL
+       FROM MX that the identity above writes is on `mail.<domain>`, a
+       different name, so the two do not collide. */
+    new route53.MxRecord(this, "InboundMx", {
+      zone: hostedZone,
+      recordName: domainName,
+      values: [{ priority: 10, hostName: `inbound-smtp.${this.region}.amazonaws.com` }],
+    });
+
+    /* Raw messages, kept a month so a failed forward can be recovered by
+       hand. The S3 receipt action adds the bucket policy SES needs. */
+    const mailBucket = new s3.Bucket(this, "MailBucket", {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      removalPolicy: RemovalPolicy.RETAIN,
+      autoDeleteObjects: false,
+      lifecycleRules: [{ expiration: Duration.days(30) }],
+    });
+    const mailPrefix = "inbox/";
+
+    /* Anything the forwarder throws on lands here with the SES event, so a
+       failed forward is visible in the console rather than only in a log. */
+    const forwardDlq = new sqs.Queue(this, "ForwardDeadLetterQueue", {
+      retentionPeriod: Duration.days(14),
+    });
+
+    const forwardFn = new NodejsFunction(this, "ForwardFunction", {
+      entry: path.join(__dirname, "..", "lambda", "forward", "handler.ts"),
+      handler: "handler",
+      runtime: lambda.Runtime.NODEJS_22_X,
+      timeout: Duration.seconds(30),
+      memorySize: 256,
+      deadLetterQueue: forwardDlq,
+      environment: {
+        MAIL_BUCKET: mailBucket.bucketName,
+        MAIL_PREFIX: mailPrefix,
+        FORWARD_TO: forwardTo,
+        FORWARD_FROM: helloAddress,
+      },
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        target: "node22",
+        externalModules: ["@aws-sdk/client-sesv2", "@aws-sdk/client-s3"],
+      },
+    });
+
+    mailBucket.grantRead(forwardFn, `${mailPrefix}*`);
+
+    /* Pinned to hello@ as the From address: this role can forward mail, not
+       send as anyone else on the domain. */
+    forwardFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ["ses:SendEmail", "ses:SendRawEmail"],
+        resources: [
+          emailIdentity.emailIdentityArn,
+          `arn:aws:ses:${this.region}:${this.account}:identity/${forwardTo}`,
+        ],
+        conditions: { StringEquals: { "ses:FromAddress": helloAddress } },
+      }),
+    );
+
+    /* hello@ only, not a catch-all. The S3 action must run before the Lambda
+       one: the function reads the object the action wrote. */
+    const inboundRuleSet = new ses.ReceiptRuleSet(this, "InboundRuleSet", {
+      rules: [
+        {
+          receiptRuleName: "hello",
+          recipients: [helloAddress],
+          enabled: true,
+          scanEnabled: true,
+          tlsPolicy: ses.TlsPolicy.OPTIONAL,
+          actions: [
+            new sesActions.S3({ bucket: mailBucket, objectKeyPrefix: mailPrefix }),
+            new sesActions.Lambda({
+              function: forwardFn,
+              invocationType: sesActions.LambdaInvocationType.EVENT,
+            }),
+          ],
+        },
+      ],
+    });
+
+    /* CloudFormation creates rule sets but cannot activate one, and SES
+       ignores an inactive set: without this call mail to hello@ bounces even
+       with the MX in place. Deactivated again on stack delete. */
+    const activateRuleSet = new cr.AwsCustomResource(this, "ActivateInboundRuleSet", {
+      onCreate: {
+        service: "SES",
+        action: "setActiveReceiptRuleSet",
+        parameters: { RuleSetName: inboundRuleSet.receiptRuleSetName },
+        physicalResourceId: cr.PhysicalResourceId.of("ActiveReceiptRuleSet"),
+      },
+      onUpdate: {
+        service: "SES",
+        action: "setActiveReceiptRuleSet",
+        parameters: { RuleSetName: inboundRuleSet.receiptRuleSetName },
+        physicalResourceId: cr.PhysicalResourceId.of("ActiveReceiptRuleSet"),
+      },
+      onDelete: {
+        service: "SES",
+        action: "setActiveReceiptRuleSet",
+        parameters: {},
+      },
+      policy: cr.AwsCustomResourcePolicy.fromSdkCalls({
+        resources: cr.AwsCustomResourcePolicy.ANY_RESOURCE,
+      }),
+    });
+    activateRuleSet.node.addDependency(inboundRuleSet);
+
+    /* ---- Replying as hello@ from Gmail ------------------------------------
+       Gmail's "Send mail as" talks SMTP to SES with an IAM access key. The
+       user can do one thing: send raw mail from hello@. The key pair goes
+       to Secrets Manager, never to a stack output; `scripts/ses-smtp-
+       password.mjs` reads it and derives the SMTP password on demand. */
+    const smtpUser = new iam.User(this, "SesSmtpGmailUser");
+    smtpUser.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["ses:SendRawEmail"],
+        resources: [emailIdentity.emailIdentityArn],
+        conditions: { StringEquals: { "ses:FromAddress": helloAddress } },
+      }),
+    );
+    const smtpKey = new iam.AccessKey(this, "SesSmtpGmailKey", { user: smtpUser });
+    new secretsmanager.Secret(this, "SesSmtpGmailSecret", {
+      secretName: "homak/ses-smtp-gmail",
+      description: `IAM access key Gmail uses to send as ${helloAddress} through SES`,
+      secretObjectValue: {
+        accessKeyId: SecretValue.unsafePlainText(smtpKey.accessKeyId),
+        secretAccessKey: smtpKey.secretAccessKey,
+      },
+    });
+
     /* No CORS block: the browser only ever reaches this through the
        CloudFront behaviour below, which makes the call same-origin. The
        Function URL itself stays out of the repo. */
@@ -207,7 +381,7 @@ function handler(event) {
       authType: lambda.FunctionUrlAuthType.NONE,
     });
 
-    /* The distribution's 403/404 -> index.html rewrites are scoped to those
+    /* The distribution's 403/404 -> 404.html rewrites are scoped to those
        two statuses, so the Lambda's own 400/405/429/502 pass through intact.
        ALL_VIEWER_EXCEPT_HOST_HEADER forwards the body and content-type while
        leaving Host as the Function URL's own, which its SigV4-less auth

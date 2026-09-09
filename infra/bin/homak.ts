@@ -16,4 +16,5 @@ new SiteStack(app, "HomakSite", {
   sendingDomain: localConfig.sendingDomain,
   fromEmail: localConfig.fromEmail,
   toEmails: localConfig.toEmails,
+  forwardTo: localConfig.forwardTo,
 });

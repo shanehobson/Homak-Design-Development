@@ -22,4 +22,12 @@ export const localConfig = {
    * out of git.
    */
   toEmails: ["to@example.com"],
+
+  /* ---- Inbound mail ------------------------------------------------- */
+  /**
+   * Where mail sent to hello@<domain> is forwarded. Subject to the same
+   * sandbox rule as `toEmails`: it must be a verified identity until the
+   * account has production access. See EMAIL-PLAN.md at the repo root.
+   */
+  forwardTo: "to@example.com",
 } as const;

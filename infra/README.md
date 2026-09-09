@@ -131,3 +131,40 @@ max-age; the invalidation is what makes a replaced file visible right away.
 Both scripts read the AWS profile from `config.local.ts` unless `AWS_PROFILE`
 is already set, and resolve the bucket and distribution from the stack's
 CloudFormation outputs — so there is nothing to keep in sync by hand.
+
+## Inbound mail
+
+Mail to `hello@homak.dev` is received by SES (MX on the apex), stored in the
+mail bucket under `inbox/` for 30 days, and forwarded by `lambda/forward` to
+`forwardTo` from `config.local.ts`. The forward goes out *as* hello@ with
+`Reply-To` set to the original sender, which is what keeps it aligned with the
+domain's strict DMARC. Spam and virus fails are dropped and logged.
+
+Two things that are easy to miss:
+
+- **The receipt rule set has to be active.** CloudFormation can create one but
+  not activate it; the `ActivateInboundRuleSet` custom resource does that on
+  deploy. If mail bounces after a deploy, check `aws ses describe-active-receipt-rule-set`.
+- **Sandbox.** Until the account has SES production access, `forwardTo` must
+  be a verified identity, the same as `toEmails`.
+
+Failed forwards land in the `ForwardDeadLetterQueue`; the raw message is still
+in the bucket.
+
+The header rewrite is unit-tested: `npm test` runs `lambda/forward/handler.test.ts`
+with Node's built-in runner, no AWS access needed.
+
+### Replying from Gmail as hello@
+
+The stack creates an IAM user that can only `SendRawEmail` as hello@, and
+stores its access key in Secrets Manager as `homak/ses-smtp-gmail`. To get the
+SMTP settings Gmail's "Send mail as" asks for:
+
+```bash
+cd infra
+export AWS_PROFILE=<the `profile` from config.local.ts>
+node scripts/ses-smtp-password.mjs
+```
+
+Sending to arbitrary addresses this way needs production access; in the
+sandbox only verified recipients work. Full steps in `EMAIL-PLAN.md`.
