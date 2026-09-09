@@ -1,0 +1,45 @@
+---
+import { faqs } from '../../data/faq';
+---
+
+{/* Open prose rather than an accordion: Google's FAQ markup requires the
+    answers to be visible on the page, and there is nothing here worth
+    hiding. The `FAQPage` JSON-LD comes from the same array in `Base.astro`. */}
+<section class="section" id="faq" data-section="faq" aria-labelledby="faq-title">
+  <div class="container">
+    <h2 class="section-title reveal" id="faq-title">Questions</h2>
+
+    <dl class="list">
+      {faqs.map((faq, i) => (
+        <div class="qa reveal" style={`--reveal-delay: ${120 + i * 60}ms`}>
+          <dt class="qa__q">{faq.question}</dt>
+          <dd class="qa__a">{faq.answer}</dd>
+        </div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<style>
+  .list {
+    margin: clamp(2.5rem, 5vw, 4rem) auto 0;
+    max-width: 78ch;
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  .qa {
+    padding-top: clamp(1.5rem, 3vw, 2.5rem);
+    border-top: 1px solid var(--hairline);
+  }
+  .qa:first-child { border-top: 0; padding-top: 0; }
+
+  .qa__q {
+    font-size: var(--t-card);
+    line-height: 1.3;
+  }
+  .qa__a {
+    margin: 0.75rem 0 0;
+    color: var(--text-muted);
+  }
+</style>
