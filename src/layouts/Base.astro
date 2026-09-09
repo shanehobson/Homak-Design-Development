@@ -1,30 +1,138 @@
 ---
 import '../styles/global.css';
-import { site } from '../data/site';
+import { site, address, ids } from '../data/site';
+import { team } from '../data/team';
+import { services } from '../data/services';
+import { faqs } from '../data/faq';
 
-interface Props { title?: string; description?: string }
+interface Props {
+  title?: string;
+  description?: string;
+  /** Root-relative path or absolute URL. Defaults to the studio card. */
+  ogImage?: string;
+  ogImageAlt?: string;
+  ogImageWidth?: number;
+  ogImageHeight?: number;
+  ogType?: 'website' | 'article';
+  /** Overrides the indexable default — the 404 sets `noindex`. */
+  robots?: string;
+  /** Extra JSON-LD nodes appended to the shared `@graph` (see `ids`). */
+  graph?: Record<string, unknown>[];
+}
 const {
-  title = `${site.name} — ${site.tagline}`,
+  title = site.seoTitle,
   description = site.description,
+  ogImage = site.ogImage,
+  ogImageAlt = site.ogImageAlt,
+  ogImageWidth = 1200,
+  ogImageHeight = 630,
+  ogType = 'website',
+  robots = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
+  graph = [],
 } = Astro.props;
 
-const canonical = new URL(Astro.url.pathname, Astro.site ?? site.url).href;
+const origin = Astro.site ?? new URL(site.url);
+const canonical = new URL(Astro.url.pathname, origin).href;
+const abs = (path: string) => new URL(path, origin).href;
+const ogImageUrl = abs(ogImage);
 
+/* One `@graph` rather than a script per type, so the studio, the site and the
+   two founders can reference each other by `@id` instead of being repeated.
+   `geo` is deliberately absent: Google geocodes `PostalAddress` itself, and a
+   guessed lat/long that disagrees with the street address is worse for local
+   ranking than none at all. */
+const STUDIO_ID = ids.studio;
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'ProfessionalService',
-  name: site.name,
-  description: site.description,
-  url: site.url,
-  email: site.email,
-  areaServed: 'Worldwide',
-  address: {
-    '@type': 'PostalAddress',
-    addressLocality: 'Naples',
-    addressRegion: 'FL',
-    addressCountry: 'US',
-  },
-  knowsAbout: ['Web design', 'Web development', 'Brand identity'],
+  '@graph': [
+    {
+      '@type': 'ProfessionalService',
+      '@id': STUDIO_ID,
+      name: site.name,
+      alternateName: site.shortName,
+      slogan: site.tagline,
+      description: site.description,
+      url: site.url,
+      email: site.email,
+      image: abs(site.ogImage),
+      logo: abs(site.logo),
+      address: {
+        '@type': 'PostalAddress',
+        streetAddress: address.street,
+        addressLocality: address.locality,
+        addressRegion: address.region,
+        postalCode: address.postalCode,
+        addressCountry: address.country,
+      },
+      /* The studio is in Naples and takes remote work, which is two separate
+         claims — the city drives the local pack, "Worldwide" stops the listing
+         reading as Naples-only. */
+      areaServed: [
+        { '@type': 'City', name: 'Naples', containedInPlace: { '@type': 'State', name: 'Florida' } },
+        { '@type': 'AdministrativeArea', name: 'Collier County, Florida' },
+        'Worldwide',
+      ],
+      knowsAbout: [
+        'Web design',
+        'Web development',
+        'Brand identity',
+        'Responsive design',
+        'Web performance',
+        'Search engine optimization',
+      ],
+      founder: team.map((person) => ({ '@id': `${site.url}/#${person.id}` })),
+      numberOfEmployees: { '@type': 'QuantitativeValue', value: team.length },
+      /* The same five entries the Services section renders. No `price`: the
+         studio quotes per project and publishes nothing. */
+      hasOfferCatalog: {
+        '@type': 'OfferCatalog',
+        name: 'Services',
+        itemListElement: services.map((service) => ({
+          '@type': 'Offer',
+          itemOffered: {
+            '@type': 'Service',
+            '@id': `${site.url}/#${service.id}`,
+            name: service.name,
+            description: service.description,
+            url: `${site.url}/#${service.id}`,
+            provider: { '@id': STUDIO_ID },
+          },
+        })),
+      },
+    },
+    {
+      '@type': 'WebSite',
+      '@id': ids.website,
+      name: site.name,
+      url: site.url,
+      inLanguage: 'en-US',
+      publisher: { '@id': STUDIO_ID },
+    },
+    ...team.map((person) => ({
+      '@type': 'Person',
+      '@id': `${site.url}/#${person.id}`,
+      name: person.name,
+      jobTitle: person.role,
+      image: abs(person.photo.src),
+      worksFor: { '@id': STUDIO_ID },
+    })),
+    /* Only where the questions are actually rendered: Google treats FAQ
+       markup on a page without the visible text as spam. */
+    ...(Astro.url.pathname === '/'
+      ? [
+          {
+            '@type': 'FAQPage',
+            '@id': `${site.url}/#faq`,
+            mainEntity: faqs.map((faq) => ({
+              '@type': 'Question',
+              name: faq.question,
+              acceptedAnswer: { '@type': 'Answer', text: faq.answer },
+            })),
+          },
+        ]
+      : []),
+    ...graph,
+  ],
 };
 ---
 
@@ -37,13 +145,33 @@ const jsonLd = {
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
     <meta name="theme-color" content="#141414" />
 
-    <meta property="og:type" content="website" />
+    {/* The defaults already index, but the `max-*` directives opt the page
+        into full-size image previews and untruncated snippets, which are not
+        the default. */}
+    <meta name="robots" content={robots} />
+    <meta name="author" content={site.name} />
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content={String(ogImageWidth)} />
+    <meta property="og:image:height" content={String(ogImageHeight)} />
+    <meta property="og:image:alt" content={ogImageAlt} />
+
+    {/* Twitter reads the `og:` tags for everything it can, but not the card
+        type, and its image tag is the one that wins when both are present. */}
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 

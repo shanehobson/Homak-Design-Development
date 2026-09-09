@@ -4,7 +4,9 @@ import Backdrop from '../components/Backdrop.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/sections/Hero.astro';
 import Team from '../components/sections/Team.astro';
+import Services from '../components/sections/Services.astro';
 import Projects from '../components/sections/Projects.astro';
+import FAQ from '../components/sections/FAQ.astro';
 import Contact from '../components/sections/Contact.astro';
 import EnquiryModal from '../components/EnquiryModal.astro';
 ---
@@ -16,7 +18,9 @@ import EnquiryModal from '../components/EnquiryModal.astro';
   <main class="stack">
     <Hero />
     <Team />
+    <Services />
     <Projects />
+    <FAQ />
     <Contact />
   </main>
 
@@ -29,9 +33,10 @@ import EnquiryModal from '../components/EnquiryModal.astro';
 </style>
 
 <script>
+  import '../scripts/reveal';
+
   const backdrop = document.querySelector<HTMLElement>('[data-backdrop]');
   const sections = document.querySelectorAll<HTMLElement>('[data-section]');
-  const revealables = document.querySelectorAll<HTMLElement>('.reveal');
 
   // Which section owns the backdrop right now. Whichever tracked section
   // covers the most of the viewport wins, so the handover is unambiguous
@@ -55,21 +60,5 @@ import EnquiryModal from '../components/EnquiryModal.astro';
     );
 
     sections.forEach((section) => sectionObserver.observe(section));
-  }
-
-  // One-shot reveal for content as it scrolls in.
-  if (revealables.length) {
-    const revealObserver = new IntersectionObserver(
-      (entries, observer) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          entry.target.classList.add('is-visible');
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.2, rootMargin: '0px 0px -8% 0px' },
-    );
-
-    revealables.forEach((el) => revealObserver.observe(el));
   }
 </script>

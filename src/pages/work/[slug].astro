@@ -1,0 +1,279 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { Image, getImage } from 'astro:assets';
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Contact from '../../components/sections/Contact.astro';
+import EnquiryModal from '../../components/EnquiryModal.astro';
+import { projects, projectPath } from '../../data/projects';
+import { site, ids } from '../../data/site';
+
+/* One page per project, straight from `projects.ts`. Everything a page needs
+   beyond the card copy is optional there (`seoTitle`, `summary`, `body`,
+   `published`), so a project renders the moment it exists and gets richer as
+   the long-form write-up lands. */
+export const getStaticPaths = (() =>
+  projects.map((project) => ({ params: { slug: project.slug }, props: { project } }))
+) satisfies GetStaticPaths;
+
+const { project } = Astro.props;
+
+const index = projects.findIndex((p) => p.slug === project.slug);
+const prev = projects[(index - 1 + projects.length) % projects.length];
+const next = projects[(index + 1) % projects.length];
+
+const title = project.seoTitle ?? `${project.title} — ${project.category} | ${site.shortName}`;
+const description = project.summary ?? project.description;
+const body = project.body ?? [project.description];
+
+const origin = Astro.site ?? new URL(site.url);
+const abs = (path: string) => new URL(path, origin).href;
+const pageUrl = abs(projectPath(project.slug));
+
+/* The poster doubles as the social card. JPEG rather than webp: the scrapers
+   behind link previews are less forgiving about formats than browsers are. */
+const og = await getImage({ src: project.poster, width: 1200, format: 'jpeg' });
+const ogUrl = abs(og.src);
+const posterAlt = `${project.title} — ${project.category}`;
+
+/* Full-size still for the video poster; the `<Image>` below covers the
+   no-video case with a proper srcset. */
+const still = project.video
+  ? await getImage({ src: project.poster, width: 1600, format: 'webp' })
+  : null;
+
+/* Page-specific nodes appended to the shared graph in `Base.astro`. The
+   studio and site are referenced by `@id`, not repeated. */
+const graph: Record<string, unknown>[] = [
+  {
+    '@type': 'WebPage',
+    '@id': pageUrl,
+    url: pageUrl,
+    name: title,
+    description,
+    inLanguage: 'en-US',
+    isPartOf: { '@id': ids.website },
+    about: { '@id': ids.studio },
+    breadcrumb: { '@id': `${pageUrl}#breadcrumb` },
+    ...(project.published ? { datePublished: project.published } : {}),
+    primaryImageOfPage: { '@type': 'ImageObject', url: ogUrl, width: og.attributes.width, height: og.attributes.height },
+    mainEntity: { '@id': `${pageUrl}#work` },
+    ...(project.video ? { video: { '@id': `${pageUrl}#video` } } : {}),
+  },
+  {
+    '@type': 'BreadcrumbList',
+    '@id': `${pageUrl}#breadcrumb`,
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${site.url}/` },
+      { '@type': 'ListItem', position: 2, name: 'Work', item: `${site.url}/#work` },
+      { '@type': 'ListItem', position: 3, name: project.title, item: pageUrl },
+    ],
+  },
+  {
+    '@type': 'CreativeWork',
+    '@id': `${pageUrl}#work`,
+    name: project.title,
+    description,
+    genre: project.category,
+    image: ogUrl,
+    ...(project.url ? { url: project.url } : {}),
+    creator: { '@id': ids.studio },
+    mainEntityOfPage: { '@id': pageUrl },
+  },
+];
+
+if (project.video) {
+  graph.push({
+    '@type': 'VideoObject',
+    '@id': `${pageUrl}#video`,
+    name: `${project.title} — site walkthrough`,
+    description,
+    thumbnailUrl: [ogUrl],
+    contentUrl: abs(project.video),
+    inLanguage: 'en-US',
+    /* Google will not surface a video result without `uploadDate`. */
+    ...(project.published ? { uploadDate: project.published } : {}),
+    publisher: { '@id': ids.studio },
+  });
+}
+---
+
+<Base
+  title={title}
+  description={description}
+  ogImage={og.src}
+  ogImageAlt={posterAlt}
+  ogImageWidth={og.attributes.width}
+  ogImageHeight={og.attributes.height}
+  ogType="article"
+  graph={graph}
+>
+  <Header />
+
+  <main class="stack">
+    <article class="section study" aria-labelledby="study-title">
+      <div class="container">
+        <nav class="crumbs reveal" aria-label="Breadcrumb">
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li><a href="/#work">Work</a></li>
+            <li aria-current="page">{project.title}</li>
+          </ol>
+        </nav>
+
+        <header class="study__head reveal" style="--reveal-delay: 80ms">
+          <p class="study__cat">{project.category}</p>
+          <h1 class="study__title" id="study-title">{project.title}</h1>
+        </header>
+
+        <figure class="study__media reveal" style="--reveal-delay: 160ms">
+          {project.video && still ? (
+            <video
+              src={project.video}
+              poster={still.src}
+              preload="metadata"
+              controls
+              playsinline
+              aria-label={`${project.title} — site walkthrough`}
+            ></video>
+          ) : (
+            <Image
+              src={project.poster}
+              alt={posterAlt}
+              widths={[720, 1200, 1600]}
+              sizes="(max-width: 760px) 100vw, min(1200px, 84vw)"
+              loading="eager"
+            />
+          )}
+        </figure>
+
+        <div class="study__body reveal" style="--reveal-delay: 240ms">
+          {body.map((paragraph) => <p>{paragraph}</p>)}
+
+          {project.url && (
+            <p class="study__links">
+              <a class="study__link" href={project.url} target="_blank" rel="noopener noreferrer">
+                Visit the site ↗
+              </a>
+            </p>
+          )}
+        </div>
+
+        <nav class="study__nav reveal" aria-label="More work">
+          <a class="study__adjacent" href={projectPath(prev.slug)} rel="prev">
+            <span class="study__adjacent-label">← Previous</span>
+            <span class="study__adjacent-title">{prev.title}</span>
+          </a>
+          <a class="study__adjacent study__adjacent--next" href={projectPath(next.slug)} rel="next">
+            <span class="study__adjacent-label">Next →</span>
+            <span class="study__adjacent-title">{next.title}</span>
+          </a>
+        </nav>
+      </div>
+    </article>
+
+    <Contact />
+  </main>
+
+  <EnquiryModal />
+</Base>
+
+<style>
+  .stack { position: relative; z-index: 1; }
+
+  /* The case study opens under the fixed header like the hero does, but its
+     content is a column of prose rather than a display line, so it sits a
+     little higher and narrows to a reading measure. */
+  .study { padding-top: calc(var(--header-h) + 2rem); min-height: 0; }
+
+  .crumbs ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    font-size: var(--t-menu);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+  }
+  .crumbs li + li::before { content: '/'; margin-right: 0.75rem; }
+  .crumbs a { color: var(--text-muted); transition: color 250ms var(--ease); }
+  .crumbs a:hover { color: var(--accent); }
+
+  .study__head { margin-top: clamp(2rem, 4vw, 3.5rem); }
+
+  .study__cat {
+    font-size: var(--t-menu);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .study__title {
+    margin-top: 0.75rem;
+    font-family: var(--font-display);
+    font-size: var(--t-title);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .study__media {
+    margin: clamp(2rem, 4vw, 3.5rem) 0 0;
+    border: 1px solid var(--hairline);
+    background: #000;
+  }
+  .study__media video,
+  .study__media img {
+    width: 100%;
+    height: auto;
+    max-height: 78dvh;
+    object-fit: contain;
+  }
+
+  .study__body {
+    margin-top: clamp(2rem, 4vw, 3.5rem);
+    max-width: 70ch;
+    color: var(--text-muted);
+  }
+  .study__body p + p { margin-top: 1.25em; }
+
+  .study__links { margin-top: 2rem; }
+  .study__link {
+    display: inline-block;
+    font-size: var(--t-menu);
+    text-transform: uppercase;
+    letter-spacing: var(--track-wide);
+    color: var(--accent);
+    border-bottom: 1px solid transparent;
+    transition: border-color 250ms var(--ease);
+  }
+  .study__link:hover { border-color: var(--accent); }
+
+  .study__nav {
+    margin-top: clamp(3rem, 6vw, 5rem);
+    padding-top: 2rem;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .study__adjacent { display: flex; flex-direction: column; gap: 0.35rem; }
+  .study__adjacent--next { text-align: right; }
+  .study__adjacent-label {
+    font-size: var(--t-menu);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+    transition: color 250ms var(--ease);
+  }
+  .study__adjacent-title { font-size: var(--t-card); line-height: 1.3; }
+  .study__adjacent:hover .study__adjacent-label { color: var(--accent); }
+</style>
+
+<script>
+  import '../../scripts/reveal';
+</script>

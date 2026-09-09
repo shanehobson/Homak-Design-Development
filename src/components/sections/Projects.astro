@@ -1,6 +1,6 @@
 ---
 import { Image } from 'astro:assets';
-import { projects } from '../../data/projects';
+import { projects, projectPath } from '../../data/projects';
 import VideoModal from '../VideoModal.astro';
 ---
 
@@ -20,9 +20,13 @@ import VideoModal from '../VideoModal.astro';
           tabindex="0" role="group" aria-roledescription="carousel" aria-label="Project work">
         {projects.map((project) => (
           <li class="slide">
-            <button
+            {/* A real link to the case study, so crawlers get eight URLs to
+                follow. With JS, `VideoModal.astro` intercepts the click and
+                opens the in-page preview instead; the modal links on to the
+                full page. */}
+            <a
               class="project"
-              type="button"
+              href={projectPath(project.slug)}
               data-project={project.slug}
               aria-haspopup="dialog"
             >
@@ -30,7 +34,7 @@ import VideoModal from '../VideoModal.astro';
                 <Image
                   class="project__img"
                   src={project.poster}
-                  alt=""
+                  alt={`${project.title} — ${project.category}`}
                   widths={[420, 840]}
                   sizes="(max-width: 620px) 82vw, (max-width: 1024px) 44vw, 360px"
                 />
@@ -44,10 +48,7 @@ import VideoModal from '../VideoModal.astro';
                 <span class="project__title">{project.title}</span>
                 <span class="project__cat">{project.category}</span>
               </span>
-              <span class="visually-hidden">
-                — open {project.video ? 'video' : 'details'} for {project.title}
-              </span>
-            </button>
+            </a>
           </li>
         ))}
       </ul>

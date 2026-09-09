@@ -1,6 +1,6 @@
 ---
 import ArrowLink from '../ArrowLink.astro';
-import { site, projectEnquiry } from '../../data/site';
+import { site, addressLine, projectEnquiry } from '../../data/site';
 ---
 
 {/* Placeholder shell. The comp for this section is empty — real details land
@@ -14,7 +14,17 @@ import { site, projectEnquiry } from '../../data/site';
         Tell us what you're building. We'll come back to you within two business days.
       </p>
       <ArrowLink href={projectEnquiry} size="lg" data-enquiry>Start a project</ArrowLink>
-      <p class="contact__location">{site.location}</p>
+
+      {/* The studio's name, address and email in crawlable markup. Local
+          search scores a business on finding one consistent NAP across the
+          web, and a street address that exists only in the JSON-LD is worth
+          markedly less than one a visitor can also read. */}
+      <address class="contact__nap">
+        <span class="contact__org">{site.name}</span>
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+        <span>{addressLine}</span>
+        <span class="contact__served">Available worldwide</span>
+      </address>
     </div>
   </div>
 </section>
@@ -29,10 +39,20 @@ import { site, projectEnquiry } from '../../data/site';
     text-align: center;
   }
   .contact__lede { color: var(--text-muted); max-width: 46ch; }
-  .contact__location {
+
+  .contact__nap {
+    /* `address` is italic by default in every UA stylesheet. */
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
     font-size: var(--t-menu);
     text-transform: uppercase;
     letter-spacing: 0.12em;
     color: var(--text-faint);
   }
+  .contact__org { color: var(--text-muted); }
+  .contact__nap a { color: var(--text-muted); transition: color 250ms var(--ease); }
+  .contact__nap a:hover { color: var(--accent); }
+  .contact__served { color: var(--text-faint); }
 </style>

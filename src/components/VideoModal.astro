@@ -1,31 +1,27 @@
 ---
 import { getImage } from 'astro:assets';
-import { projects } from '../data/projects';
+import { projects, projectPath } from '../data/projects';
 
-/* One dialog serves every project. The details are serialised into a JSON
-   script tag so the client script can populate it without a framework. */
-const entries = await Promise.all(
-  projects.map(async (p) => {
-    const still = await getImage({ src: p.poster, width: 1600, format: 'webp' });
-    return [
+/* One dialog serves every project, with a panel per project rendered up front
+   and all but the open one carrying `hidden`.
+   
+   This used to serialise the projects into a `<script type="application/json">`
+   for the client script to inject into a single set of empty nodes. That kept
+   273 words — half the prose on the site — out of reach of search engines and
+   of any agent doing text extraction, since both strip script tags before
+   reading. Rendering the panels makes that copy real DOM, and turns the seven
+   client links into crawlable anchors. */
+const stills = Object.fromEntries(
+  await Promise.all(
+    projects.map(async (p) => [
       p.slug,
-      {
-        title: p.title,
-        category: p.category,
-        description: p.description,
-        still: still.src,
-        video: p.video ?? null,
-        url: p.url ?? null,
-      },
-    ];
-  }),
+      (await getImage({ src: p.poster, width: 1600, format: 'webp' })).src,
+    ]),
+  ),
 );
-const payload = Object.fromEntries(entries);
 ---
 
-<script type="application/json" data-project-data set:html={JSON.stringify(payload)} />
-
-<dialog class="modal" data-modal aria-labelledby="modal-title">
+<dialog class="modal" data-modal>
   <div class="modal__inner">
     <button class="modal__close" type="button" data-modal-close aria-label="Close">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -33,20 +29,43 @@ const payload = Object.fromEntries(entries);
       </svg>
     </button>
 
-    <div class="modal__media">
-      {/* Only one of these is shown per project. */}
-      <video data-modal-video preload="none" controls playsinline hidden></video>
-      <img data-modal-still alt="" hidden />
-    </div>
+    {projects.map((project) => (
+      <article class="panel" data-panel={project.slug} hidden>
+        <div class="modal__media">
+          {project.video ? (
+            /* `src` and `poster` are held in data attributes and promoted on
+               open, so a page with eight panels still ships no video bytes and
+               no full-size poster until one is asked for. */
+            <video
+              data-panel-video
+              data-src={project.video}
+              data-poster={stills[project.slug]}
+              preload="none"
+              controls
+              playsinline
+            ></video>
+          ) : (
+            /* A real `src` — lazy, so a browser skips it while the panel is
+               hidden, but present for image crawlers. */
+            <img src={stills[project.slug]} alt={`${project.title} — site preview`} loading="lazy" />
+          )}
+        </div>
 
-    <div class="modal__body">
-      <h3 class="modal__title" id="modal-title" data-modal-title></h3>
-      <p class="modal__cat" data-modal-cat></p>
-      <p class="modal__desc" data-modal-desc></p>
-      <a class="modal__link" data-modal-link target="_blank" rel="noopener noreferrer" hidden>
-        Visit the site ↗
-      </a>
-    </div>
+        <div class="modal__body">
+          <h3 class="modal__title" data-panel-title id={`project-${project.slug}`}>{project.title}</h3>
+          <p class="modal__cat">{project.category}</p>
+          <p class="modal__desc">{project.description}</p>
+          <p class="modal__links">
+            <a class="modal__link" href={projectPath(project.slug)}>Read the case study →</a>
+            {project.url && (
+              <a class="modal__link" href={project.url} target="_blank" rel="noopener noreferrer">
+                Visit the site ↗
+              </a>
+            )}
+          </p>
+        </div>
+      </article>
+    ))}
   </div>
 </dialog>
 
@@ -87,8 +106,8 @@ const payload = Object.fromEntries(entries);
     width: 100%;
     max-height: 62dvh;
     object-fit: contain;
+    display: block;
   }
-  .modal__media [hidden] { display: none; }
 
   .modal__body { padding: clamp(1.25rem, 3vw, 2rem); }
   .modal__title { font-size: var(--t-card); font-weight: 400; line-height: 1.3; }
@@ -101,9 +120,14 @@ const payload = Object.fromEntries(entries);
   }
   .modal__desc { margin-top: 1rem; color: var(--text-muted); max-width: 70ch; }
 
+  .modal__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    margin-top: 1.5rem;
+  }
   .modal__link {
     display: inline-block;
-    margin-top: 1.5rem;
     font-size: var(--t-menu);
     text-transform: uppercase;
     letter-spacing: var(--track-wide);
@@ -112,7 +136,6 @@ const payload = Object.fromEntries(entries);
     transition: border-color 250ms var(--ease);
   }
   .modal__link:hover { border-color: var(--accent); }
-  .modal__link[hidden] { display: none; }
 
   /* Phone: the dialog becomes a full-bleed sheet so the media, not the copy,
      is the main event. The UA `<dialog>` defaults (max-width and the auto
@@ -128,7 +151,14 @@ const payload = Object.fromEntries(entries);
       overflow: hidden;
     }
 
-    .modal__inner { display: flex; flex-direction: column; height: 100%; }
+    .modal__inner { height: 100%; }
+
+    /* The column lives on the open panel, not on `.modal__inner`, now that the
+       inner wraps eight of them. Matched with `:not([hidden])` rather than
+       `.panel` so this never overrides the attribute and reveals a closed
+       panel — a plain `display: flex` here would beat the UA's
+       `[hidden] { display: none }` and show all eight at once. */
+    .panel:not([hidden]) { display: flex; flex-direction: column; height: 100%; }
 
     /* Media claims the free space; min-height:0 lets it actually shrink, and
        the explicit 1fr row gives the child a definite height to resolve its
@@ -159,71 +189,58 @@ const payload = Object.fromEntries(entries);
 </style>
 
 <script>
-  interface Entry {
-    title: string;
-    category: string;
-    description: string;
-    still: string;
-    video: string | null;
-    url: string | null;
-  }
-
-  const dataEl = document.querySelector('[data-project-data]');
   const modal = document.querySelector<HTMLDialogElement>('[data-modal]');
 
-  if (dataEl?.textContent && modal) {
-    const data: Record<string, Entry> = JSON.parse(dataEl.textContent);
-
-    const video = modal.querySelector<HTMLVideoElement>('[data-modal-video]')!;
-    const still = modal.querySelector<HTMLImageElement>('[data-modal-still]')!;
-    const titleEl = modal.querySelector<HTMLElement>('[data-modal-title]')!;
-    const catEl = modal.querySelector<HTMLElement>('[data-modal-cat]')!;
-    const descEl = modal.querySelector<HTMLElement>('[data-modal-desc]')!;
-    const linkEl = modal.querySelector<HTMLAnchorElement>('[data-modal-link]')!;
+  if (modal) {
+    const panels = new Map<string, HTMLElement>();
+    modal.querySelectorAll<HTMLElement>('[data-panel]').forEach((panel) =>
+      panels.set(panel.dataset.panel!, panel),
+    );
 
     let opener: HTMLElement | null = null;
+    let active: HTMLElement | null = null;
+
+    // Idempotent: safe to call from every close path, and twice in a row.
+    const closePanel = (panel: HTMLElement) => {
+      const video = panel.querySelector<HTMLVideoElement>('[data-panel-video]');
+      if (video) {
+        video.pause();
+        // Drop the buffer so a closed video stops using memory and bandwidth.
+        if (video.hasAttribute('src')) {
+          video.removeAttribute('src');
+          video.load();
+        }
+      }
+      panel.hidden = true;
+    };
 
     const open = (slug: string, trigger: HTMLElement) => {
-      const entry = data[slug];
-      if (!entry) return;
+      const panel = panels.get(slug);
+      if (!panel) return;
+
+      if (active && active !== panel) closePanel(active);
       opener = trigger;
+      active = panel;
+      panel.hidden = false;
 
-      titleEl.textContent = entry.title;
-      catEl.textContent = entry.category;
-      descEl.textContent = entry.description;
+      /* The dialog's accessible name has to follow whichever panel is open,
+         so it is pointed at that panel's heading rather than set once. */
+      const title = panel.querySelector<HTMLElement>('[data-panel-title]');
+      if (title?.id) modal.setAttribute('aria-labelledby', title.id);
 
-      if (entry.url) {
-        linkEl.href = entry.url;
-        linkEl.hidden = false;
-      } else {
-        linkEl.hidden = true;
-      }
-
-      if (entry.video) {
-        // src is attached only on open, so the page ships zero video bytes.
-        video.src = entry.video;
-        video.poster = entry.still;
-        video.hidden = false;
-        still.hidden = true;
-      } else {
-        still.src = entry.still;
-        still.alt = `${entry.title} — site preview`;
-        still.hidden = false;
-        video.hidden = true;
+      const video = panel.querySelector<HTMLVideoElement>('[data-panel-video]');
+      if (video) {
+        video.poster = video.dataset.poster!;
+        video.src = video.dataset.src!;
       }
 
       modal.showModal();
-      if (entry.video) video.play().catch(() => { /* autoplay may be blocked; controls remain */ });
+      video?.play().catch(() => { /* autoplay may be blocked; controls remain */ });
     };
 
-    // Idempotent: safe to call from every close path, and twice in a row.
     const teardown = () => {
-      video.pause();
-      // Drop the buffer so a closed video stops using memory and bandwidth.
-      if (video.hasAttribute('src')) {
-        video.removeAttribute('src');
-        video.load();
-      }
+      if (active) closePanel(active);
+      active = null;
       opener?.focus();
       opener = null;
     };
@@ -235,8 +252,15 @@ const payload = Object.fromEntries(entries);
       modal.close();
     };
 
-    document.querySelectorAll<HTMLElement>('[data-project]').forEach((btn) =>
-      btn.addEventListener('click', () => open(btn.dataset.project!, btn)),
+    /* The cards are links to the case study pages. A plain click opens the
+       preview here instead; a modified click (new tab, new window) is left
+       to the browser so the link keeps behaving like one. */
+    document.querySelectorAll<HTMLElement>('[data-project]').forEach((card) =>
+      card.addEventListener('click', (e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        open(card.dataset.project!, card);
+      }),
     );
 
     modal.querySelector('[data-modal-close]')!
