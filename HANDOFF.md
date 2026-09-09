@@ -1,56 +1,21 @@
 # Handoff — homak.dev, 2026-09-09
 
-For the next agent picking this up. Everything below is uncommitted on `main`
-on top of commit `0a95e65` ("Add the enquiry modal and its contact Lambda").
-Nothing has been deployed today. Read this, then `SEO-PLAN.md` and
+For the next agent picking this up.
+Read this, then `SEO-PLAN.md` and
 `EMAIL-PLAN.md`, which carry the tick-by-tick state.
 
-## Release status — nothing below is live yet
+## Release status — live since 2026-09-09
 
-Every change described in this file is **uncommitted, unpushed, and
-undeployed**. That includes all of the visible site changes (case study
-pages, Services and FAQ sections, 404 page, card links, poster alt text,
-nav links) and the infra changes. The working tree also still carries the
-earlier SEO markup pass from before today (structured data, canonical,
-sitemap, OG image, crawlable modal prose, `llms.txt`, `robots.txt`,
-`scripts/og-image.mjs`, the NAP block in `Contact.astro`), which was never
-committed either. `git status` shows ~35 files.
+Everything in this file is committed on `main` (commits `6fc3942`..`af283be`
+on top of `0a95e65`), pushed, and deployed with `cdk deploy`. Verified after
+the deploy: homepage and `/work/zaera/` return 200, an unknown path returns
+404 with the built 404 page, `www.homak.dev` 301s to the apex, the sitemap
+and `/llms.txt` are served, the apex MX points at SES, and the `hello` rule
+set is the active one with both actions on it.
 
-The release has three steps, all of which Shane has to trigger:
-
-1. **Commit.** Suggested grouping, oldest first, so each commit reads on its
-   own (see the commit-message style in `git log`; no Claude co-author
-   trailers):
-   - the pre-existing markup pass: `astro.config.mjs`, `package.json`,
-     `package-lock.json`, `src/layouts/Base.astro` (JSON-LD/OG parts),
-     `src/components/VideoModal.astro` (rendered panels), `src/components/
-     sections/Contact.astro`, `src/data/site.ts` (address/SEO fields),
-     `src/data/team.ts`, `src/pages/llms.txt.ts`, `public/og.png`,
-     `public/logo.png`, `public/robots.txt`, `scripts/`
-   - case study pages + card links + alt text + 404 + shared reveal script:
-     `src/pages/work/`, `src/pages/404.astro`, `src/scripts/`,
-     `src/components/sections/Projects.astro`, `src/components/VideoModal.astro`,
-     `src/components/Header.astro`, `src/data/projects.ts`, `src/data/site.ts`,
-     `src/layouts/Base.astro`, `src/pages/index.astro`
-   - Services + FAQ sections and their data/JSON-LD:
-     `src/components/sections/Services.astro`, `FAQ.astro`,
-     `src/data/services.ts`, `src/data/faq.ts`, `src/pages/index.astro`,
-     `src/layouts/Base.astro`, `src/pages/llms.txt.ts`
-   - infra: 404/www fixes, Node 22, inbound mail + SMTP user + forwarder
-     test: everything under `infra/` plus `EMAIL-PLAN.md`
-   - `SEO-PLAN.md`, `HANDOFF.md`
-   Several files appear in more than one group; split hunks with
-   `git add -p` or fold the groups together — Shane's call.
-2. **Push** `main` to the remote.
-3. **Deploy:** `npm run build && cd infra && npx cdk diff && npx cdk deploy`
-   with `AWS_PROFILE` exported (infra README). The one deploy ships the site
-   and the infra changes together. Expect the diff to show the new
-   `SourceObjectKeys` hash (site content) plus the CloudFront error
-   responses, the function code, both Lambda runtimes, and the new mail
-   resources. Then invalidate nothing by hand: the deployment does it.
-
-Until step 3 runs, homak.dev still serves the one-page site with the soft
-404 and no working hello@ address.
+For the next release: `npm run build && cd infra && npx cdk deploy` with
+`AWS_PROFILE` exported (infra README). A content-only release should show
+only `DeploySite/CustomResource` changing in `cdk diff`.
 
 ## Ground rules that apply here
 
@@ -158,10 +123,10 @@ Until step 3 runs, homak.dev still serves the one-page site with the soft
   8-bit names, folded headers, byte-identical body, stripped headers,
   missing From, LF-only endings. All pass.
 
-## Not verified / cannot verify locally
+## Not verified
 
-- The CloudFront 404, www redirect, and all mail plumbing need `cdk deploy`.
-- SES rule-set activation only proves itself with a real message.
+- End-to-end mail: the rule set is active and the MX resolves, but no real
+  message has been sent to hello@ yet (Shane's queue, item 2).
 - Odyssey's site could not be fetched (browser permission), so its copy is
   from the existing description and the login-screen poster only.
 
@@ -178,7 +143,7 @@ Also worth a read by Shane: the FAQ answers describe process and stack
 
 ## Shane's queue (all `[you]`)
 
-1. Commit, push, deploy as in "Release status" above.
+1. ~~Commit, push, deploy.~~ Done 2026-09-09.
 2. Send a test message to hello@; check DKIM/DMARC pass and Reply-To.
 3. Request SES production access (needed for Gmail-as-hello@ replies to
    unverified addresses).

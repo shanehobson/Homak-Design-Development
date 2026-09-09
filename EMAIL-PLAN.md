@@ -70,7 +70,7 @@ gitignored `infra/config.local.ts`, like the enquiry recipients already do.
 - [x] **[code]** `infra/README.md`: a short "Inbound mail" section covering the rule-set activation and the sandbox verification requirement.
 
 ### 2.3 Deploy
-- [ ] **[you]** `npm run build && cd infra && npx cdk diff && npx cdk deploy` with `AWS_PROFILE` exported, as in the README. The diff should show the MX record, the mail bucket, the rule set, the custom resource, and the forwarder Lambda, and nothing touching the site bucket or distribution beyond the pending 404 and www changes.
+- [x] **[you]** Deployed 2026-09-09. MX resolves and the `hello` rule set is active. The diff should show the MX record, the mail bucket, the rule set, the custom resource, and the forwarder Lambda, and nothing touching the site bucket or distribution beyond the pending 404 and www changes.
 
 ---
 

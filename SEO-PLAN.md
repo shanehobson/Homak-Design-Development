@@ -94,10 +94,10 @@ remain.
 ### 3.3 404 page
 - [x] **[code]** Add `src/pages/404.astro` so unknown paths stop soft-404ing into the homepage.
 - [x] **[code]** Point the CloudFront 403/404 error responses at `/404.html` with a 404 status (`infra/lib/site-stack.ts`); they rewrote to `index.html` with a 200.
-- [ ] **[you]** Deploy the stack (`cdk deploy` in `infra/`) so the change reaches the distribution.
+- [x] **[you]** Deployed 2026-09-09; unknown paths return 404.
 
 ### 3.4 www → apex redirect
-- [x] **[code]** The existing viewer-request function now 301s `www.homak.dev` to `homak.dev` (`infra/lib/site-stack.ts`). Goes live with the next `cdk deploy`.
+- [x] **[code]** The existing viewer-request function now 301s `www.homak.dev` to `homak.dev` (`infra/lib/site-stack.ts`). Live since 2026-09-09.
 
 ### 3.5 Video transcripts
 - [x] The videos are silent screen captures; the case study body is the written walkthrough.
