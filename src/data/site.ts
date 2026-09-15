@@ -34,6 +34,13 @@ export const addressLine =
   `${address.street}, ${address.locality}, ${address.region} ${address.postalCode}`;
 
 /**
+ * Stripe-hosted customer portal login. A client enters their email and Stripe
+ * mails them a sign-in link to pay invoices, update their card and see their
+ * payment history. Swap for `https://portal.homak.dev` once that portal ships.
+ */
+export const billingPortal = 'https://billing.stripe.com/p/login/eVqaEWdlz4Y58f11Vw0Ba00';
+
+/**
  * No-JS fallback for every "Start a project" CTA. With JS the same controls
  * carry `data-enquiry` and open `EnquiryModal.astro` instead, which POSTs to
  * `/api/contact`; the href is only followed when that script has not run.

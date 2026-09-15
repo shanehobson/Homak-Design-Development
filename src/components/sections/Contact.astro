@@ -1,6 +1,6 @@
 ---
 import ArrowLink from '../ArrowLink.astro';
-import { site, addressLine, projectEnquiry } from '../../data/site';
+import { site, addressLine, projectEnquiry, billingPortal } from '../../data/site';
 ---
 
 {/* Placeholder shell. The comp for this section is empty — real details land
@@ -25,6 +25,8 @@ import { site, addressLine, projectEnquiry } from '../../data/site';
         <span>{addressLine}</span>
         <span class="contact__served">Available worldwide</span>
       </address>
+
+      <a class="contact__billing" href={billingPortal}>Existing client? Pay an invoice</a>
     </div>
   </div>
 </section>
@@ -55,4 +57,15 @@ import { site, addressLine, projectEnquiry } from '../../data/site';
   .contact__nap a { color: var(--text-muted); transition: color 250ms var(--ease); }
   .contact__nap a:hover { color: var(--accent); }
   .contact__served { color: var(--text-faint); }
+
+  .contact__billing {
+    font-size: var(--t-menu);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 0.25rem;
+    transition: color 250ms var(--ease), border-color 250ms var(--ease);
+  }
+  .contact__billing:hover { color: var(--accent); border-color: var(--accent); }
 </style>
