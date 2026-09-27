@@ -26,7 +26,10 @@ import { site, addressLine, projectEnquiry, billingPortal } from '../../data/sit
         <span class="contact__served">Available worldwide</span>
       </address>
 
-      <a class="contact__billing" href={billingPortal}>Existing client? Pay an invoice</a>
+      <div class="contact__links">
+        <a class="contact__billing" href={billingPortal}>Existing client? Pay an invoice</a>
+        <a class="contact__billing" href="/privacy/">Privacy policy</a>
+      </div>
     </div>
   </div>
 </section>
@@ -57,6 +60,13 @@ import { site, addressLine, projectEnquiry, billingPortal } from '../../data/sit
   .contact__nap a { color: var(--text-muted); transition: color 250ms var(--ease); }
   .contact__nap a:hover { color: var(--accent); }
   .contact__served { color: var(--text-faint); }
+
+  .contact__links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem 2rem;
+  }
 
   .contact__billing {
     font-size: var(--t-menu);

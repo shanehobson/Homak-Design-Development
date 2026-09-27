@@ -1,0 +1,206 @@
+---
+import Base from '../layouts/Base.astro';
+import Header from '../components/Header.astro';
+import EnquiryModal from '../components/EnquiryModal.astro';
+import { site, addressLine } from '../data/site';
+
+/* Every statement here describes how the site and the client portal actually
+   behave — the enquiry Lambda, the hello@ forwarder and the MailBucket
+   lifecycle in `infra/`, and the portal's cookies and providers in
+   `homak-portal`. Change the code, re-check this page, and bump the date. */
+const updated = new Date('2026-09-27T12:00:00Z');
+const updatedLabel = updated.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+const updatedIso = updated.toISOString().slice(0, 10);
+
+const host = new URL(site.url).host;
+---
+
+<Base
+  title={`Privacy policy | ${site.shortName}`}
+  description="What personal details Homak collects through its website, enquiry form and client portal, how they are used, and how to ask for them to be deleted."
+>
+  <Header />
+
+  <main class="stack">
+    <article class="section privacy" aria-labelledby="privacy-title">
+      <div class="container">
+        <nav class="crumbs reveal" aria-label="Breadcrumb">
+          <ol>
+            <li><a href="/">Home</a></li>
+            <li aria-current="page">Privacy</li>
+          </ol>
+        </nav>
+
+        <header class="privacy__head reveal" style="--reveal-delay: 80ms">
+          <h1 class="privacy__title" id="privacy-title">Privacy policy</h1>
+          <p class="privacy__date">
+            Last updated <time datetime={updatedIso}>{updatedLabel}</time>
+          </p>
+        </header>
+
+        <div class="privacy__body reveal" style="--reveal-delay: 160ms">
+          <p>
+            This page explains what personal details {site.name} ("Homak", "we") collects through {host},
+            our enquiry form and our client portal, and what we do with them. We keep it
+            short because we collect very little.
+          </p>
+
+          <h2>Who we are</h2>
+          <p>
+            {site.name} is a web design and development studio at {addressLine}. For anything
+            about this policy or your details, email <a href={`mailto:${site.email}`}>{site.email}</a>.
+          </p>
+
+          <h2>The enquiry form</h2>
+          <p>
+            When you send the "Start a project" form we receive your name, your email address, and,
+            if you give them, your phone number and a description of your project. The form is sent
+            to us as an email through Amazon Web Services and lands in our inbox; it is not saved to
+            a database. We use it only to reply to your enquiry. We don't sell or share it, and we
+            don't add you to a mailing list.
+          </p>
+          <p>
+            To stop the form being flooded, we briefly keep a count of submissions for each IP
+            address. The count expires after ten minutes and is deleted automatically soon after.
+          </p>
+
+          <h2>Email to {site.email}</h2>
+          <p>
+            Mail sent to {site.email} is received by Amazon Web Services, which keeps a copy for 30
+            days (so a message can be recovered if delivery fails) and forwards it to our inbox,
+            hosted by Google. We keep correspondence for as long as we need it to work with you.
+          </p>
+
+          <h2>Analytics and cookies</h2>
+          <p>
+            This website has no analytics, tracking pixels or advertising, and it sets no cookies.
+            Its fonts and videos are served from our own domain, not from third parties.
+          </p>
+
+          <h2>The client portal</h2>
+          <p>
+            The client portal is for existing clients only, by invitation. For each client it holds
+            your name, email address and company, your sign-in account, and a record of account
+            activity, such as sign-ins, password changes, and invoice and plan actions, which we
+            keep for security and billing records.
+          </p>
+          <p>
+            The portal sets two cookies, both needed to sign you in: one keeps you signed in (for
+            up to seven days) and one lasts ten minutes while you finish signing in. Neither is used
+            for tracking. As on the enquiry form, we briefly count sign-in attempts per IP address
+            to slow down password guessing.
+          </p>
+          <p>
+            Payments are handled by Stripe. You enter card and bank details into Stripe's own form,
+            and they go to Stripe, not to our servers. On the portal's payment pages, and on
+            Stripe's billing page linked from our contact section, Stripe may set its own cookies
+            to prevent fraud. See <a href="https://stripe.com/privacy">Stripe's privacy policy</a>.
+          </p>
+
+          <h2>Email we send</h2>
+          <p>
+            We email you to reply to an enquiry, and, if you are a client, to send portal
+            invitations and password reset codes (through Amazon Web Services) and invoices
+            (through Stripe). We don't send marketing email. To ask us to stop emailing you, write
+            to <a href={`mailto:${site.email}`}>{site.email}</a>.
+          </p>
+
+          <h2>Who else handles your details</h2>
+          <ul>
+            <li>Amazon Web Services hosts this website and the client portal, and sends and receives our email.</li>
+            <li>Stripe processes payments and sends invoices.</li>
+            <li>Google hosts our inbox. Stripe's payment form also loads its typeface from Google Fonts.</li>
+          </ul>
+
+          <h2>Your choices</h2>
+          <p>
+            You can ask to see, correct or delete the personal details we hold about you by emailing <a href={`mailto:${site.email}`}>{site.email}</a>.
+            We'll answer within 30 days. We may have to keep billing records for tax purposes even after a client account is closed.
+          </p>
+
+          <h2>Changes</h2>
+          <p>
+            If this policy changes, we'll update it here and change the date at the top.
+          </p>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <EnquiryModal />
+</Base>
+
+<style>
+  .stack { position: relative; z-index: 1; }
+
+  /* Laid out like a case study: opens under the fixed header and narrows to a
+     reading measure. */
+  .privacy { padding-top: calc(var(--header-h) + 2rem); min-height: 0; }
+
+  .crumbs ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    font-size: var(--t-menu);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+  }
+  .crumbs li + li::before { content: '/'; margin-right: 0.75rem; }
+  .crumbs a { color: var(--text-muted); transition: color 250ms var(--ease); }
+  .crumbs a:hover { color: var(--accent); }
+
+  .privacy__head { margin-top: clamp(2rem, 4vw, 3.5rem); }
+
+  .privacy__title {
+    font-family: var(--font-display);
+    font-size: var(--t-title);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .privacy__date {
+    margin-top: 0.75rem;
+    font-size: var(--t-menu);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .privacy__body {
+    margin-top: clamp(2rem, 4vw, 3.5rem);
+    max-width: 70ch;
+    color: var(--text-muted);
+  }
+  .privacy__body p + p { margin-top: 1.25em; }
+  .privacy__body h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 0.75rem;
+    font-size: var(--t-card);
+    font-weight: 500;
+    color: var(--text);
+  }
+  .privacy__body ul { padding-left: 1.25em; }
+  .privacy__body li + li { margin-top: 0.5em; }
+  .privacy__body a {
+    color: var(--accent);
+    border-bottom: 1px solid transparent;
+    transition: border-color 250ms var(--ease);
+    overflow-wrap: anywhere;
+  }
+  .privacy__body a:hover { border-color: var(--accent); }
+</style>
+
+<script>
+  import '../scripts/reveal';
+</script>

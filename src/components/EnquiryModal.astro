@@ -50,6 +50,10 @@ import { site } from '../data/site';
       <p class="form__status" data-enquiry-status role="status" aria-live="polite"></p>
 
       <ArrowLink type="submit" size="lg" data-enquiry-submit>Send</ArrowLink>
+
+      <p class="form__privacy">
+        We only use your details to reply. <a href="/privacy/">Privacy policy</a>
+      </p>
     </form>
 
     <div class="done" data-enquiry-done hidden>
@@ -146,6 +150,14 @@ import { site } from '../data/site';
 
   /* The submit CTA sits left, not stretched across the sheet. */
   .form :global(.cta) { align-self: flex-start; }
+
+  .form__privacy { font-size: var(--t-menu); color: var(--text-faint); }
+  .form__privacy a {
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--hairline);
+    transition: color 250ms var(--ease), border-color 250ms var(--ease);
+  }
+  .form__privacy a:hover { color: var(--accent); border-color: var(--accent); }
 
   .done[hidden] { display: none; }
   .done { margin-top: clamp(1.5rem, 3vw, 2rem); }
