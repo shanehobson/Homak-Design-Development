@@ -34,6 +34,12 @@ export const services: Service[] = [
       'Products with accounts, dashboards and data behind them: the software a business runs on, or a product of your own. Scoped, designed and engineered end to end.',
   },
   {
+    id: 'ai-workflows',
+    name: 'AI workflows',
+    description:
+      'AI built into the way your company already works: assistants that draft, sort and answer, and automations that take over the repetitive steps between your tools. We find where it saves real time, build it, and connect it to your systems.',
+  },
+  {
     id: 'design-and-branding',
     name: 'Design & branding',
     description:

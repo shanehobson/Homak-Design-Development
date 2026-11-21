@@ -4,7 +4,7 @@ import ArrowLink from './ArrowLink.astro';
 import { nav, projectEnquiry } from '../data/site';
 ---
 
-<header class="header">
+<header class="header" data-header>
   <div class="header__inner container">
     <a href="/#top" class="brand" aria-label="Homak — home">
       <Logo width={180} />
@@ -46,6 +46,12 @@ import { nav, projectEnquiry } from '../data/site';
     height: var(--header-h);
     display: flex;
     align-items: center;
+    border-bottom: 1px solid transparent;
+    transition: background-color 300ms var(--ease), border-color 300ms var(--ease);
+  }
+  .header.is-scrolled {
+    background: var(--grad-0);
+    border-bottom-color: var(--hairline);
   }
 
   .header__inner {
@@ -121,6 +127,13 @@ import { nav, projectEnquiry } from '../data/site';
 </style>
 
 <script>
+  const header = document.querySelector<HTMLElement>('[data-header]');
+  if (header) {
+    const syncScrolled = () => header.classList.toggle('is-scrolled', window.scrollY > 0);
+    window.addEventListener('scroll', syncScrolled, { passive: true });
+    syncScrolled();
+  }
+
   const toggle = document.querySelector<HTMLButtonElement>('[data-menu-toggle]');
   const drawer = document.querySelector<HTMLElement>('[data-drawer]');
 

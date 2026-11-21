@@ -38,6 +38,11 @@ export const faqs: Faq[] = [
       'Modern web frameworks such as Astro for content sites, and the same family of tools for applications, with payments through Stripe where a site takes money. Sites are hosted on AWS behind a global CDN, which is why they stay fast for visitors wherever they are.',
   },
   {
+    question: 'Can you help us use AI in our business?',
+    answer:
+      'Yes. We help companies put AI to work in the processes they already have: answering common customer questions, drafting replies and documents, sorting incoming requests, and moving information between tools without retyping it. We start by finding the steps where it would save real time, build and test the workflow with your team, and connect it to the systems you already use.',
+  },
+  {
     question: 'Do you handle hosting and the domain?',
     answer:
       'Yes. We host what we build, set up the domain, certificates and email, and keep the site updated after launch. If you would rather own the hosting yourself, we set it up in your own accounts and hand over the keys.',

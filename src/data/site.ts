@@ -4,9 +4,9 @@ export const site = {
   tagline: 'Design meets engineering.',
   /* Leads with the service and the city rather than the brand: nobody searches
      "Homak" yet, and Google truncates around 60 characters. */
-  seoTitle: 'Web Design & Development in Naples, FL | Homak Studio',
+  seoTitle: 'Web Design, Development & AI in Naples, FL | Homak',
   description:
-    'Homak is a web design and development studio in Naples, Florida. We build fast, distinctive websites — thoughtful design and solid engineering under one roof.',
+    'Homak is a web design and development studio in Naples, Florida. We build fast, distinctive websites and web apps, and help companies put AI to work in their workflows.',
   location: 'Naples, FL / Available worldwide',
   email: 'hello@homak.dev',
   url: 'https://homak.dev',

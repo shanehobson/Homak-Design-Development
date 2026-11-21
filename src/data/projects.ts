@@ -1,3 +1,4 @@
+import bkbCo from '../assets/projects/bkb-co.webp';
 import hobsonElectric from '../assets/projects/hobson-electric.webp';
 import lumina from '../assets/projects/lumina-model-academy.webp';
 import maxManicure from '../assets/projects/max-manicure.webp';
@@ -40,8 +41,8 @@ export interface Project {
 /** Path of a project's case study page, with the trailing slash Astro emits. */
 export const projectPath = (slug: string) => `/work/${slug}/`;
 
-/* Every case study went live with the site itself; see `git log` for the
-   date the posters were added. */
+/* The date the original case studies went live with the site itself; see
+   `git log` for the date the posters were added. */
 const SITE_LAUNCH = '2026-08-27';
 
 export const projects: Project[] = [
@@ -64,6 +65,27 @@ export const projects: Project[] = [
       'Scheduling is the heart of the app. Every staff member gets their own colour on a shared weekly view, so two appointments can never land in the same slot unnoticed. Clients book through a branded page that shows only the services, people and times that are actually available, on a layout built for a phone. Confirmed appointments sync to Google Calendar, and confirmation emails and reminders go out on their own.',
       'Payments run through Stripe. A card can be kept on file and charged after the appointment in a single click, or taken at checkout, and every transaction and its status is visible from the dashboard. The service menu supports categories, prices and durations, and the whole booking experience takes the business’s logo and colours, with a live preview as the owner makes changes.',
       'The result is a product that runs end to end, from a visitor reading the landing page to a paid appointment on the calendar, with the design and the engineering coming from the same two people.',
+    ],
+  },
+  {
+    slug: 'bkb-co',
+    title: 'BKB & Co.',
+    category: 'Online boutique / Naples, FL',
+    description:
+      'An online store for a Naples clothing boutique. Shoppers browse by category, filter by size, price and stock, and add to a cart that opens beside the page, then pay through a secure checkout.',
+    poster: bkbCo,
+    video: '/videos/bkb-co.mp4',
+    url: 'https://shopbkbco.com/',
+    published: '2026-11-21',
+    seoTitle: 'Online Boutique Website Design in Naples, FL — BKB & Co. | Homak',
+    summary:
+      'An online store for BKB & Co., a Naples clothing boutique, with category browsing, size and price filters, a slide-out cart and secure checkout. Designed and built by Homak.',
+    body: [
+      'BKB & Co. is a locally owned boutique in Naples that sells clothing and accessories for the whole family. The brief was an online store that feels like the boutique itself, warm and curated, and that gets a shopper from the first photograph to a paid order without friction.',
+      'The home page sets the tone with a full-width photograph and a single Shop Now button. Below it, four cards lead straight into the main categories, and a New Arrivals row shows the latest pieces with their prices, each with its own add-to-cart button. The boutique’s story follows in its own section, and a sign-up form collects email addresses for news of new drops.',
+      'The shop is built for browsing a large and changing catalogue. Categories sit in a row across the top, and a Filter & Sort panel slides in from the side. A shopper can sort by newest or by price, pick one or more sizes, set a price range and hide anything out of stock. Each size shows how many styles are available, the button at the bottom shows how many will be left, and the chosen filters stay visible above the grid, where each can be removed with one click.',
+      'Every product has its own page with photography, price, sizes and a quantity selector, and a row of related pieces underneath. Adding to the cart opens a panel beside the page rather than taking the shopper away from it. Quantities can be changed and items removed right there, with the subtotal updating as they go.',
+      'Checkout is handled by Shopify, so payment is secure and familiar: card, Shop Pay, PayPal and the other express options, with shipping or local pickup. The store owner manages products, stock and orders in the Shopify admin, and the storefront picks up the changes on its own.',
     ],
   },
   {
@@ -194,7 +216,7 @@ export const projects: Project[] = [
   {
     slug: 'hobson-electric',
     title: 'Hobson Electric',
-    category: 'Electrical services / West Central Indiana',
+    category: 'Electrical services / Crawfordsville, IN',
     description:
       'A site for an electrical services company, covering the commercial and residential work it takes on and the people who do it. A free-estimate request form sends enquiries directly to the owner.',
     poster: hobsonElectric,
@@ -203,9 +225,9 @@ export const projects: Project[] = [
     published: SITE_LAUNCH,
     seoTitle: 'Electrical Contractor Website Design — Hobson Electric, Indiana | Homak',
     summary:
-      'A website for Hobson Electric, a commercial and residential electrical contractor serving nine counties in West Central Indiana since 1999, with a free-estimate request form. Designed and built by Homak.',
+      'A website for Hobson Electric, a commercial and residential electrical contractor in Crawfordsville, Indiana, serving nine counties since 1999, with a free-estimate request form. Designed and built by Homak.',
     body: [
-      'Hobson Electric has been an electrical contractor in West Central Indiana since 1999, covering nine counties around its home base. It does commercial and industrial work, including the large jobs that need a bucket truck, and residential work from new construction to remodelling. It needed a website that did what a good yard sign does, only with more room: say what the company does, where, for how long, and how to get an estimate.',
+      'Hobson Electric has been an electrical contractor in Crawfordsville, Indiana since 1999, covering nine counties around its home base. It does commercial and industrial work, including the large jobs that need a bucket truck, and residential work from new construction to remodelling. It needed a website that did what a good yard sign does, only with more room: say what the company does, where, for how long, and how to get an estimate.',
       'The site is organised the way a customer thinks. Commercial and Residential each get their own section, written for the person reading it. The commercial copy talks about decades of experience serving business and industry and the capacity for larger projects; the residential copy talks about safety and efficiency for a homeowner. An About Us section introduces the people who actually show up, with photographs of the team rather than stock images of a stranger in a hard hat.',
       'The service area is drawn on a map and spelled out as a list of counties, so a customer knows at a glance whether they are covered. The company’s founding year is right under the name, because twenty-five years in the same county is the single most persuasive thing a contractor can say.',
       'The main call to action is a free estimate. A request form sends the enquiry straight to the owner as an email, with the phone number, email address and physical address alongside it for customers who prefer to call or drop in. A Facebook link connects to the page the company already keeps.',

@@ -45,8 +45,7 @@ a { color: inherit; text-decoration: none; }
 
 .section {
   position: relative;
-  /* Guards against the carousel's scrollable content widening the document.
-     `clip` rather than `hidden`: it clips without making a scroll container. */
+  /* `clip` rather than `hidden`: it clips without making a scroll container. */
   overflow-x: clip;
   /* Capped so the dead space either side of the content stops growing with
      the window. 1000px clears the common laptop viewports (1440x900 -> ~800,

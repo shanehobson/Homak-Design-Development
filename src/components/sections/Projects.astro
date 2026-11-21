@@ -8,101 +8,54 @@ import VideoModal from '../VideoModal.astro';
   <div class="container">
     <h2 class="section-title reveal" id="work-title">Our projects</h2>
 
-    <div class="carousel reveal" style="--reveal-delay: 140ms">
-      <button class="nav-btn nav-btn--prev" type="button" data-carousel-prev aria-label="Previous project">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M15 4 7 12l8 8" stroke="currentColor" stroke-width="1.25"
-                stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
-
-      <ul class="track" data-carousel-track
-          tabindex="0" role="group" aria-roledescription="carousel" aria-label="Project work">
-        {projects.map((project) => (
-          <li class="slide">
-            {/* A real link to the case study, so crawlers get eight URLs to
-                follow. With JS, `VideoModal.astro` intercepts the click and
-                opens the in-page preview instead; the modal links on to the
-                full page. */}
-            <a
-              class="project"
-              href={projectPath(project.slug)}
-              data-project={project.slug}
-              aria-haspopup="dialog"
-            >
-              <span class="project__frame">
-                <Image
-                  class="project__img"
-                  src={project.poster}
-                  alt={`${project.title} — ${project.category}`}
-                  widths={[420, 840]}
-                  sizes="(max-width: 620px) 82vw, (max-width: 1024px) 44vw, 360px"
-                />
-                {project.video && (
-                  <span class="project__play" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                  </span>
-                )}
-              </span>
-              <span class="project__meta">
-                <span class="project__title">{project.title}</span>
-                <span class="project__cat">{project.category}</span>
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
-
-      <button class="nav-btn nav-btn--next" type="button" data-carousel-next aria-label="Next project">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M9 4l8 8-8 8" stroke="currentColor" stroke-width="1.25"
-                stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
-    </div>
+    <ul class="grid reveal" style="--reveal-delay: 140ms">
+      {projects.map((project) => (
+        <li>
+          {/* A real link to the case study, so crawlers get a URL per project
+              to follow. With JS, `VideoModal.astro` intercepts the click and
+              opens the in-page preview instead; the modal links on to the
+              full page. */}
+          <a
+            class="project"
+            href={projectPath(project.slug)}
+            data-project={project.slug}
+            aria-haspopup="dialog"
+          >
+            <span class="project__frame">
+              <Image
+                class="project__img"
+                src={project.poster}
+                alt={`${project.title} — ${project.category}`}
+                widths={[420, 840]}
+                sizes="(max-width: 640px) 90vw, (max-width: 1000px) 44vw, 360px"
+              />
+              {project.video && (
+                <span class="project__play" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                </span>
+              )}
+            </span>
+            <span class="project__meta">
+              <span class="project__title">{project.title}</span>
+              <span class="project__cat">{project.category}</span>
+            </span>
+          </a>
+        </li>
+      ))}
+    </ul>
   </div>
 
   <VideoModal />
 </section>
 
 <style>
-  .carousel {
-    position: relative;
-    margin-top: clamp(2.5rem, 5vw, 4rem);
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    align-items: center;
-    gap: clamp(0.5rem, 2vw, 1.5rem);
-  }
-
-  .nav-btn {
-    width: 2.75rem;
-    height: 2.75rem;
-    display: grid;
-    place-items: center;
-    color: var(--accent);
-    transition: opacity 250ms var(--ease), transform 250ms var(--ease);
-  }
-  .nav-btn svg { width: 1.5rem; height: 1.5rem; }
-  .nav-btn:hover:not(:disabled) { transform: scale(1.15); }
-  .nav-btn:disabled { opacity: 0.2; cursor: default; }
-
-  .track {
+  .grid {
     list-style: none;
-    margin: 0;
-    /* Trailing space is only gutter for a scrollbar that is hidden below. */
-    padding: 0.5rem 0 0.75rem;
-    display: flex;
-    gap: clamp(1rem, 2.5vw, 2rem);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-  }
-  .track::-webkit-scrollbar { display: none; }
-
-  .slide {
-    flex: 0 0 calc((100% - 2 * clamp(1rem, 2.5vw, 2rem)) / 3);
-    scroll-snap-align: start;
+    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+    gap: clamp(2rem, 3vw, 2.5rem) clamp(1rem, 2.5vw, 2rem);
   }
 
   .project {
@@ -161,44 +114,4 @@ import VideoModal from '../VideoModal.astro';
     line-height: 1.5;
   }
 
-  @media (max-width: 1024px) {
-    .slide { flex-basis: calc((100% - clamp(1rem, 2.5vw, 2rem)) / 2); }
-  }
-  @media (max-width: 620px) {
-    .slide { flex-basis: 100%; }
-  }
 </style>
-
-<script>
-  const track = document.querySelector<HTMLElement>('[data-carousel-track]');
-  const prev = document.querySelector<HTMLButtonElement>('[data-carousel-prev]');
-  const next = document.querySelector<HTMLButtonElement>('[data-carousel-next]');
-
-  if (track && prev && next) {
-    const step = () => track.querySelector<HTMLElement>('.slide')?.offsetWidth ?? track.clientWidth;
-    const gap = () => parseFloat(getComputedStyle(track).columnGap || '0');
-
-    const syncButtons = () => {
-      // 1px of slack absorbs sub-pixel scroll positions.
-      const max = track.scrollWidth - track.clientWidth - 1;
-      prev.disabled = track.scrollLeft <= 1;
-      next.disabled = track.scrollLeft >= max;
-    };
-
-    const scrollByCard = (dir: 1 | -1) =>
-      track.scrollBy({ left: dir * (step() + gap()), behavior: 'smooth' });
-
-    prev.addEventListener('click', () => scrollByCard(-1));
-    next.addEventListener('click', () => scrollByCard(1));
-    track.addEventListener('scroll', syncButtons, { passive: true });
-    window.addEventListener('resize', syncButtons);
-
-    // Arrow keys move the carousel when the track itself has focus.
-    track.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowRight') { e.preventDefault(); scrollByCard(1); }
-      if (e.key === 'ArrowLeft') { e.preventDefault(); scrollByCard(-1); }
-    });
-
-    syncButtons();
-  }
-</script>

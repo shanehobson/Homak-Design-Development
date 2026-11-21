@@ -18,6 +18,5 @@ export const team = [
   },
 ] as const;
 
-/* Rewritten from the copy in the comp, which had a few typos. */
 export const teamBio =
-  'Ksenia and Shane are a couple, which makes us easy to work with — one point of contact, and changes handled quickly. We have been building together for two years. Ksenia is from Ukraine and has lived in the US for four years; Shane is originally from Indiana. We are both based in Naples, Florida.';
+  'We build software that gets you noticed, streamlines your work and makes you money. Ksenia designs it and Shane engineers it, so you work directly with the two people doing the work: one point of contact, and changes handled quickly. We have been building together for three years, based in Naples, Florida.';
